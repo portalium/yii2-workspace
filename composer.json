@@ -1,0 +1,22 @@
+{
+	"name" : "{{vendor}}/portalium-{{package}}",
+	"description" : "Module {{package}} for Portalium",
+	"type" : "portalium-module",
+	"license": "MIT",
+	"homepage" : "https://portalium.dev",
+	"authors" : [
+		{
+			"name" : "Uğur YILDIZ",
+			"email" : "yildiz@diginova.com.tr",
+			"homepage" : "https://uguryildiz.net"
+		}
+	],
+	"support" : {
+		"issues" : "https://github.com/{{vendor}}/portalium-{{package}}/issues"
+	},
+	"autoload" : {
+		"psr-4" : {
+			"{{vendor}}\\{{package}}\\" : "src/"
+		}
+	}
+}
