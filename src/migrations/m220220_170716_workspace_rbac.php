@@ -1,6 +1,6 @@
 <?php
 
-use Yii;
+
 use yii\db\Migration;
 
 
@@ -8,8 +8,8 @@ class m220220_170716_workspace_rbac extends Migration
 {
     public function up()
     {
-        $auth = Yii::$app->authManager;
-        $role = Yii::$app->setting->getValue('default::role');
+        $auth = \Yii::$app->authManager;
+        $role = \Yii::$app->setting->getValue('default::role');
         $admin = (isset($role) && $role != '') ? $auth->getRole($role) : $auth->getRole('admin');
 
         $permissions = [
@@ -39,7 +39,7 @@ class m220220_170716_workspace_rbac extends Migration
 
     public function down()
     {
-        $auth = Yii::$app->authManager;
+        $auth = \Yii::$app->authManager;
         
         $permissions = [
             'workspaceWebDefaultIndex',
