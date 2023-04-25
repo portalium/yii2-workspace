@@ -1,43 +1,63 @@
 <?php
 
-namespace {{vendor}}\{{package}};
-
-use portalium\base\Event;
-use {{vendor}}\{{package}}\components\TriggerActions;
+namespace portalium\workspace;
 
 class Module extends \portalium\base\Module
 {
-    public static $tablePrefix = '{{package}}_';
-    
-    public static $name = '{{package}}';
-
-    public static $description = '{{package}} Module';
-
     public $apiRules = [
         [
             'class' => 'yii\rest\UrlRule',
             'controller' => [
-                '{{package}}/default',
+                'workspace/default',
             ]
         ],
     ];
-    
+    public static $tablePrefix = 'workspace_';
+    public static $name = 'Workspace';
     public static function moduleInit()
     {
-        self::registerTranslation('{{package}}','@{{vendor}}/{{package}}/messages',[
-            '{{package}}' => '{{package}}.php',
+        self::registerTranslation('workspace', '@portalium/workspace/messages', [
+            'workspace' => 'workspace.php',
         ]);
+    }
+
+    public function getMenuItems()
+    {
+        $menuItems = [
+            [
+                [
+                    'menu' => 'web',
+                    'type' => 'action',
+                    'route' => '/workspace/default/index',
+                ],
+                [
+                    'menu' => 'web',
+                    'type' => 'widget',
+                    'label' => 'portalium\workspace\widgets\Workspace',
+                    'name' => 'Workspace',
+                ],
+                
+            ],
+        ];
+        return $menuItems;
+    }
+
+    public function registerComponents()
+    {
+        return [
+            'workspace' => [
+                'class' => 'portalium\workspace\components\Workspace',
+            ]
+        ];
     }
 
     public static function t($message, array $params = [])
     {
-        return parent::coreT('{{package}}', $message, $params);
+        return parent::coreT('workspace', $message, $params);
     }
 
-    /* 
-        public function registerEvents()
-        {
-            Event::on($this::className(), UserModule::EVENT_USER_DELETE_BEFORE, [new TriggerActions(), 'onUserDeleteBefore']);
-        } 
-    */
+    /* public function registerEvents()
+    {
+        \Yii::$app->on(\portalium\user\Module::EVENT_USER_CREATE, [new TriggerActions(), 'onUserCreateAfter']);
+    } */
 }

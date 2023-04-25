@@ -1,22 +1,31 @@
 {
-	"name" : "{{vendor}}/portalium-{{package}}",
-	"description" : "Module {{package}} for Portalium",
+	"name" : "portalium/portalium-workspace",
+	"description" : "Module Workspace for Portalium",
 	"type" : "portalium-module",
 	"license": "MIT",
 	"homepage" : "https://portalium.dev",
 	"authors" : [
 		{
 			"name" : "Uğur YILDIZ",
-			"email" : "yildiz@diginova.com.tr",
+			"email" : "ugur.yildiz@diginova.com.tr",
 			"homepage" : "https://uguryildiz.net"
+		},
+		{
+			"name" : "Mehmet Ali Demir",
+			"email" : "mehmet.demir@diginova.com.tr"
 		}
 	],
 	"support" : {
-		"issues" : "https://github.com/{{vendor}}/portalium-{{package}}/issues"
+		"issues" : "https://github.com/portalium/portalium-workspace/issues"
 	},
+	"minimum-stability": "dev",
+	"require": {
+		"portalium/portalium-site": "*",
+		"portalium/portalium-user": "*"
+    },
 	"autoload" : {
 		"psr-4" : {
-			"{{vendor}}\\{{package}}\\" : "src/"
+			"portalium\\workspace\\" : "src/"
 		}
 	}
 }
