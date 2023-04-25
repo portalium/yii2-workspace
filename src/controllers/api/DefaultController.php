@@ -1,6 +1,6 @@
 <?php
 
-namespace {{vendor}}\{{package}}\controllers\api;
+namespace portalium\workspace\controllers\api;
 
 use portalium\rest\ActiveController as RestActiveController;
 
