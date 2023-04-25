@@ -1,19 +1,17 @@
 <?php
 
-
-use Yii;
 use yii\db\Migration;
 
 class m220220_170716_workspace_rule_rbac extends Migration
 {
     public function up()
     {
-        $auth = Yii::$app->authManager;
+        $auth = \Yii::$app->authManager;
 
         $rule = new portalium\workspace\rbac\WorkspaceCheckRule();
         $auth->add($rule);
 
-        $role = Yii::$app->setting->getValue('default::role');
+        $role = \Yii::$app->setting->getValue('default::role');
         $admin = (isset($role) && $role != '') ? $auth->getRole($role) : $auth->getRole('admin');
         $endPrefix = 'ForWorkspace';
         $permissions = [
@@ -44,7 +42,7 @@ class m220220_170716_workspace_rule_rbac extends Migration
 
     public function down()
     {
-        $auth = Yii::$app->authManager;
+        $auth = \Yii::$app->authManager;
         $endPrefix = 'ForWorkspace';
         $permissions = [
             'workspaceWebDefaultIndex',

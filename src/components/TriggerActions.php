@@ -2,6 +2,7 @@
 
 namespace portalium\workspace\components;
 
+use portalium\workspace\models\WorkspaceUser;
 use Yii;
 use yii\base\BaseObject;
 
@@ -33,4 +34,38 @@ class TriggerActions extends BaseObject
             }
         }
      */
+
+    public function onRoleDeleteBefore($event)
+    {
+        ['item' => $item] = $event->payload;
+        Yii::warning($item->name);
+        $this->deleteWorkspaceUserRoles($item->name);
+    }
+
+    private function deleteWorkspaceUserRoles($roleName)
+    {
+        $workspaceUserRoles = WorkspaceUser::find()->where(['role' => $roleName])->all();
+
+        foreach ($workspaceUserRoles as $workspaceUserRole) {
+            $workspaceUserRole->delete();
+        }
+    }
+
+    public function onRoleUpdateBefore($event)
+    {
+        ['item' => $item, 'oldItem' => $oldItem] = $event->payload;
+        Yii::warning($item->name);
+        Yii::warning($oldItem->name);
+        $this->updateWorkspaceUserRoles($item->name, $oldItem->name);
+    }
+
+    private function updateWorkspaceUserRoles($roleName, $oldRoleName)
+    {
+        $workspaceUserRoles = WorkspaceUser::find()->where(['role' => $oldRoleName])->all();
+
+        foreach ($workspaceUserRoles as $workspaceUserRole) {
+            $workspaceUserRole->role = $roleName;
+            $workspaceUserRole->save();
+        }
+    }
 }
