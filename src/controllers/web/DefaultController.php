@@ -7,6 +7,7 @@ use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use portalium\user\models\User;
 use portalium\workspace\Module;
+use portalium\user\Module as UserModule;
 use yii\web\NotFoundHttpException;
 use portalium\workspace\models\Workspace;
 use portalium\workspace\models\WorkspaceUser;
@@ -152,9 +153,9 @@ class DefaultController extends WebController
         
         $users = User::find()->select(['id_user', 'username'])->asArray()->all();
         $assignedUsers = WorkspaceUser::find()
-            ->select(['user_user.id_user', 'workspace_workspace_user.id_workspace_user' , 'username', 'workspace_workspace_user.role', 'workspace_workspace_user.id_module'])
-            ->leftJoin('user_user', 'user_user.id_user = ' . Module::$tablePrefix . 'workspace_user.id_user')
-            ->groupBy('workspace_workspace_user.id_workspace_user')
+            ->select([UserModule::$tablePrefix . 'user.id_user', Module::$tablePrefix . 'workspace_user.id_workspace_user' , 'username', Module::$tablePrefix . 'workspace_user.role', Module::$tablePrefix . 'workspace_user.id_module'])
+            ->leftJoin(UserModule::$tablePrefix . 'user', UserModule::$tablePrefix . 'user.id_user = ' . Module::$tablePrefix . 'workspace_user.id_user')
+            ->groupBy(Module::$tablePrefix . 'workspace_user.id_workspace_user')
             ->andWhere([Module::$tablePrefix . 'workspace_user.id_workspace' => $id])
             ->asArray()
             ->all();
@@ -207,20 +208,22 @@ class DefaultController extends WebController
             return $this->actionAssignUpdate();
         }
 
-        // Assign role to users for the workspace
+        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace' => $id_workspace, 'id_user' => $users, 'id_module' => $id_module, 'role' => $role])->all();
+
         foreach ($users as $user) {
-            $workspaceUser = WorkspaceUser::findOne(['id_workspace' => $id_workspace, 'id_user' => $user, 'id_module' => $id_module, 'role' => $role]);
-            if (!$workspaceUser) {
+            $workspaceUser = array_filter($workspaceUsers, function($workspaceUser) use ($user) {
+                return $workspaceUser->id_user == $user;
+            });
+            $workspaceUser = array_shift($workspaceUser);
+            if (!$workspaceUser){
                 $workspaceUser = new WorkspaceUser();
                 $workspaceUser->id_workspace = $id_workspace;
                 $workspaceUser->id_user = $user;
                 $workspaceUser->id_module = $id_module;
+                $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
             }
             $workspaceUser->role = $role;
 
-            // Check if user is active in the workspace
-            $status = WorkspaceUser::find()->where(['id_user' => $user, 'status' => WorkspaceUser::STATUS_ACTIVE])->one();
-            $workspaceUser->status = $status ? WorkspaceUser::STATUS_INACTIVE : WorkspaceUser::STATUS_ACTIVE;
             $workspaceUser->save();
         }
 
@@ -252,15 +255,13 @@ class DefaultController extends WebController
         $id_workspace = Yii::$app->request->get('id');
         $id_module = Yii::$app->request->get('id_module');
 
-        // Update role assignments for users in the workspace
-        foreach ($workspaceUsers as $id_workspace_user) {
-            $workspaceUser = WorkspaceUser::findOne($id_workspace_user);
-            if ($workspaceUser) {
-                $workspaceUser->role = $role;
-                $workspaceUser->id_module = $id_module;
-                if (!WorkspaceUser::find()->where(['id_workspace' => $id_workspace, 'id_user' => $workspaceUser->id_user, 'id_module' => $id_module, 'role' => $role])->one()) {
-                    $workspaceUser->save();
-                }
+        $idsUsers = WorkspaceUser::find()->select('id_user')->where(['id_workspace_user' => $workspaceUsers])->asArray()->all();
+        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace' => $id_workspace, 'id_user' => $idsUsers, 'id_module' => $id_module])->all();
+        foreach ($workspaceUsers as $workspaceUser) {
+            $workspaceUser->role = $role;
+            $workspaceUser->id_module = $id_module;
+            if (!WorkspaceUser::find()->where(['id_workspace' => $id_workspace, 'id_user' => $workspaceUser->id_user, 'id_module' => $id_module, 'role' => $role])->count() < 1) {
+                $workspaceUser->save();
             }
         }
 
@@ -287,15 +288,8 @@ class DefaultController extends WebController
         }
         // Retrieve users and workspace ID from the request
         $workspaceUsers = Yii::$app->request->get('selected_values');
-        $id_workspace = Yii::$app->request->get('id');
-
-        // Remove users from the workspace
-        foreach ($workspaceUsers as $id) {
-            $workspaceUser = WorkspaceUser::findOne(['id_workspace_user' => $id]);
-            if ($workspaceUser) {
-                $workspaceUser->delete();
-            }
-        }
+        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace_user' => $workspaceUsers])->all();
+        WorkspaceUser::deleteAll(['id_workspace_user' => $workspaceUsers]);
 
         // Display success message to user
         Yii::$app->session->addFlash('success', 'Users removed from role successfully.');

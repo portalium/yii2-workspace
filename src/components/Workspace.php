@@ -24,11 +24,15 @@ class Workspace extends Component
         return false;
     }
 
-    public static function getAvailableRoles()
+    public static function getAvailableRoles($params = [])
     {
+        $module = isset($params['module']) ? $params['module'] : null;
+        if (!$module) {
+            return [];
+        }
         $availableRoles = Yii::$app->setting->getValue('workspace::available_roles');
-        if (isset($availableRoles['mhsb'])) {
-            $availableRoles = $availableRoles['mhsb'];
+        if (isset($availableRoles[$module])) {
+            $availableRoles = $availableRoles[$module];
         } else {
             $availableRoles = [];
         }
