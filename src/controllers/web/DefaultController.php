@@ -286,14 +286,42 @@ class DefaultController extends WebController
         if (!\Yii::$app->user->can('workspaceWebDefaultRemove', ['id_module' => 'workspace'])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
-        // Retrieve users and workspace ID from the request
-        $workspaceUsers = Yii::$app->request->get('selected_values');
-        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace_user' => $workspaceUsers])->all();
-        WorkspaceUser::deleteAll(['id_workspace_user' => $workspaceUsers]);
+        $workspaceUsersIds = Yii::$app->request->get('selected_values');
+        $id_workspace = Yii::$app->request->get('id_workspace');
+        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace_user' => $workspaceUsersIds])->groupBy(['id_workspace_user'])->all();
+        $uniqueModule = [];
+        $workspaceAdminRoles = [];
+        foreach ($workspaceUsers as $workspaceUser) {
+            $uniqueModule[$workspaceUser->id_module] = $workspaceUser->id_module;
+        }
+        foreach ($uniqueModule as $module) {
+            try {
+                $role = Yii::$app->setting->getValue($module . '::workspace::admin_role');
+                if ($role) {
+                    $workspaceAdminRoles[$module] = $role;
+                }
+            } catch (\Exception $e) {
+            }
+        }
+        $deletebleWorkspaceUsers = [];
+        $checkWorkspacesDataProvider = WorkspaceUser::find()
+            ->groupBy(Module::$tablePrefix . 'workspace_user.id_workspace_user')
+            ->andWhere([Module::$tablePrefix . 'workspace_user.id_workspace' => $id_workspace])
+            ->all();
+        foreach ($workspaceUsers as $workspaceUser) {
+            $count = count(array_filter($checkWorkspacesDataProvider, function($workspaceUserCount) use ($workspaceUser) {
+                return $workspaceUserCount->role == $workspaceUser->role && $workspaceUserCount->id_module == $workspaceUser->id_module;
+            }));
+            if (isset($workspaceAdminRoles[$workspaceUser->id_module]) && $workspaceUser->role == $workspaceAdminRoles[$workspaceUser->id_module] && $count < 2) {
+                Yii::$app->session->addFlash('error', sprintf(Module::t('You can not remove user %s from workspace %s because he is an administrator.'), $workspaceUser->user->username, $workspaceUser->workspace->name));
+            }else{
+                $deletebleWorkspaceUsers[] = $workspaceUser->id_workspace_user;
+                unset($checkWorkspacesDataProvider[array_search($workspaceUser, $workspaceUsers)]);
+            }
+        }
 
-        // Display success message to user
+        WorkspaceUser::deleteAll(['id_workspace_user' => $deletebleWorkspaceUsers]);
         Yii::$app->session->addFlash('success', 'Users removed from role successfully.');
-        // Return true if the action was successful
         return true;
     }
 

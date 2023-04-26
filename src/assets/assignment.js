@@ -85,7 +85,7 @@ $(document).ready(function() {
         // Send AJAX request to remove action with selected users and workspace ID
         $.get('remove', {
             selected_values: selectedValues,
-            id: id_workspace
+            id_workspace: id_workspace
         }, function(data) {
             // Reload assigned and users sections using pjax
             $.pjax.reload({
