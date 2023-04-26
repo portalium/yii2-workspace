@@ -43,6 +43,7 @@ class WorkspaceCheckRule extends Rule
         if (!$checkWorkspaceUser) {
             return false;
         }
+
         foreach ($checkWorkspaceUser as $workspaceUser) {
                 $role = $auth->getRole($workspaceUser->role);
                 $permission = $auth->getPermission($permission);
