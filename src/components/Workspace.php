@@ -58,4 +58,22 @@ class Workspace extends Component
         return $supportWorkspaceModules;
     }
 
+    public function checkSupportRoles()
+    {
+        $supportWorkspaceModules = $this->getSupportModules();
+        
+        foreach ($supportWorkspaceModules as $key => $value) {
+            try {
+                $role = Yii::$app->setting->getValue($key . '::workspace::admin_role');
+                $defaultRole = Yii::$app->setting->getValue($key . '::workspace::default_role');
+                if (!$role || !$defaultRole) {
+                    return false;
+                }
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

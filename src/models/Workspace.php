@@ -64,18 +64,22 @@ class Workspace extends \yii\db\ActiveRecord
     public function afterSave($insert, $changedAttributes)
     {
         if ($insert) {
-            $workspaceUser = new WorkspaceUser();
-            $workspaceUser->id_workspace = $this->id_workspace;
-            $workspaceUser->id_user = Yii::$app->user->id;
-            $workspaceUser->role = (Yii::$app->setting->getValue('workspace::default_role')) ? Yii::$app->setting->getValue('workspace::default_role') : 'admin';
-            $activeWorkspaceId = WorkspaceUser::getActiveWorkspaceId();
-            if ($activeWorkspaceId) {
-                $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
-            } else {
-                $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
-            }
-            if (!$workspaceUser->save()) {
-
+            $supportModules = Yii::$app->workspace->getSupportModules();
+            foreach ($supportModules as $key => $module) {
+                $workspaceUser = new WorkspaceUser();
+                $workspaceUser->id_workspace = $this->id_workspace;
+                $workspaceUser->id_user = Yii::$app->user->id;
+                $workspaceUser->role = Yii::$app->setting->getValue($key . '::workspace::admin_role');
+                $workspaceUser->id_module = $key;
+                $activeWorkspaceId = WorkspaceUser::getActiveWorkspaceId();
+                if ($activeWorkspaceId) {
+                    $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
+                } else {
+                    $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
+                }
+                if (!$workspaceUser->save()) {
+                    
+                }
             }
         }
         parent::afterSave($insert, $changedAttributes);

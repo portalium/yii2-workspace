@@ -20,26 +20,7 @@ class m110523_200101_workspace_setting extends Migration
                 ]
             ])
         ]);
-
-        $this->insert(Module::$tablePrefix . 'setting', [
-            'module' => 'workspace',
-            'name' => 'workspace::default_role',
-            'label' => 'Workspace Admin Role',
-            'value' => 'admin',
-            'type' => Form::TYPE_DROPDOWNLIST,
-            'config' => json_encode([
-                'model' => [
-                    'class' => 'portalium\site\models\DbManager',
-                    'map' => [
-                        'key' => 'name' ,
-                        'value' => 'name'
-                    ],
-                    'where' => [
-                        'type' => 1
-                    ]
-                ]
-            ])
-        ]);
+        
     }
 
     public function down()
