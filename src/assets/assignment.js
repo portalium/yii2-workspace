@@ -10,7 +10,7 @@ $(document).ready(function() {
         console.log(selectedRole);
         console.log(id_module);
 
-        assignAction(selectedValues, selectedRole, id_workspace, '#roleModal', id_module);
+        assignAction(selectedValues, selectedRole, id_workspace, '#roleModal', id_module, 'create');
         $.pjax.reload({
             container: '#pjax-flash-message',
             async: false
@@ -23,7 +23,7 @@ $(document).ready(function() {
         var selectedValues = $('select[data-target="assigned"]').val();
         var selectedRole = $('#role-list-update').val();
         var id_module = $('#module-list-update').val();
-        assignAction(selectedValues, selectedRole, id_workspace, '#roleModalUpdate', id_module);
+        assignAction(selectedValues, selectedRole, id_workspace, '#roleModalUpdate', id_module, 'update');
     });
 
     // Handles the click event for the removeButton element
@@ -49,13 +49,14 @@ $(document).ready(function() {
      * @param {string} id_workspace The workspace ID.
      * @param {string} modalSelector The modal selector.
      */
-    function assignAction(selectedValues, selectedRole, id_workspace, modalSelector, id_module) {
+    function assignAction(selectedValues, selectedRole, id_workspace, modalSelector, id_module, type) {
         // Send AJAX request to assign action with selected users, role, and workspace ID
         $.get('assign', {
-            users: selectedValues,
+            selected_values: selectedValues,
             role: selectedRole,
             id: id_workspace,
-            id_module: id_module
+            id_module: id_module,
+            type: type
         }, function(data) {
             // Reload assigned and users sections using pjax
             $.pjax.reload({
@@ -83,8 +84,8 @@ $(document).ready(function() {
     function removeAction(selectedValues, id_workspace, modalSelector) {
         // Send AJAX request to remove action with selected users and workspace ID
         $.get('remove', {
-            users: selectedValues,
-            id: id_workspace
+            selected_values: selectedValues,
+            id_workspace: id_workspace
         }, function(data) {
             // Reload assigned and users sections using pjax
             $.pjax.reload({

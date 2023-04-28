@@ -2,6 +2,9 @@
 
 namespace portalium\workspace;
 
+use portalium\base\Event;
+use portalium\workspace\components\TriggerActions;
+
 class Module extends \portalium\base\Module
 {
     public $apiRules = [
@@ -56,8 +59,9 @@ class Module extends \portalium\base\Module
         return parent::coreT('workspace', $message, $params);
     }
 
-    /* public function registerEvents()
+    public function registerEvents()
     {
-        \Yii::$app->on(\portalium\user\Module::EVENT_USER_CREATE, [new TriggerActions(), 'onUserCreateAfter']);
-    } */
+        Event::on($this::className(), \portalium\rbac\Module::EVENT_ITEM_DELETE, [new TriggerActions(), 'onRoleDeleteBefore']);
+        Event::on($this::className(), \portalium\rbac\Module::EVENT_ITEM_UPDATE, [new TriggerActions(), 'onRoleUpdateBefore']);
+    }
 }

@@ -24,11 +24,15 @@ class Workspace extends Component
         return false;
     }
 
-    public static function getAvailableRoles()
+    public static function getAvailableRoles($params = [])
     {
+        $module = isset($params['module']) ? $params['module'] : null;
+        if (!$module) {
+            return [];
+        }
         $availableRoles = Yii::$app->setting->getValue('workspace::available_roles');
-        if (isset($availableRoles['mhsb'])) {
-            $availableRoles = $availableRoles['mhsb'];
+        if (isset($availableRoles[$module])) {
+            $availableRoles = $availableRoles[$module];
         } else {
             $availableRoles = [];
         }
@@ -52,6 +56,24 @@ class Workspace extends Component
         }
 
         return $supportWorkspaceModules;
+    }
+
+    public function checkSupportRoles()
+    {
+        $supportWorkspaceModules = $this->getSupportModules();
+        
+        foreach ($supportWorkspaceModules as $key => $value) {
+            try {
+                $role = Yii::$app->setting->getValue($key . '::workspace::admin_role');
+                $defaultRole = Yii::$app->setting->getValue($key . '::workspace::default_role');
+                if (!$role || !$defaultRole) {
+                    return false;
+                }
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }

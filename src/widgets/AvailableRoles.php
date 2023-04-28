@@ -67,6 +67,7 @@ class AvailableRoles extends InputWidget
 
         echo Tabs::widget([
             'items' => $tabs,
+            'id' => 'workspace-'. $this->settingIndex .'-tabs',
             
         ]);
 

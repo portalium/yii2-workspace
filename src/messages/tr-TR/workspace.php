@@ -1,6 +1,6 @@
 <?php
 return [
-    'Workspace' => 'Organizasyon',
+    'Workspace' => 'Çalışma Alanı',
     'Report' => 'Rapor',
     'Recent Activities' => 'Son İşlemler',
     'Last Transactions' => 'Son Hareketler',
@@ -47,6 +47,6 @@ return [
     'Net-wage' => 'Net Maaş',
     'Tax(₺)' => 'Vergi(₺)', 
     'Collacted' => 'Tahsil Edilen',
-    'Create Workspace' => 'Organizasyon Oluştur',
+    'Create Workspace' => 'Çalışma Alanı Oluştur',
     'Assignable roles' => 'Atanabilir roller',
 ];

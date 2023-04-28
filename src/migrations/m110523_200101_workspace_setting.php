@@ -1,9 +1,7 @@
 <?php
 
-use Yii;
 use yii\db\Migration;
 use portalium\site\Module;
-use yii\helpers\ArrayHelper;
 use portalium\site\models\Form;
 
 class m110523_200101_workspace_setting extends Migration
@@ -22,6 +20,7 @@ class m110523_200101_workspace_setting extends Migration
                 ]
             ])
         ]);
+        
     }
 
     public function down()

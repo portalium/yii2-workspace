@@ -1,7 +1,6 @@
 <?php
 
 use portalium\workspace\Module;
-use portalium\user\Module as UserModule;
 use yii\db\Migration;
 
 class m180323_174347_workspace extends Migration
