@@ -30,7 +30,6 @@ $this->params['breadcrumbs'][] = $this->title;
         'filterModel' => $searchModel,
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
-
             'name',
             [
                 'class' => ActionColumn::className(),
@@ -51,5 +50,6 @@ $this->params['breadcrumbs'][] = $this->title;
         ],
     ]); ?>
 
+    <?php Panel::end(); ?>
 
 </div>
