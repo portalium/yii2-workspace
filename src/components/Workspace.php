@@ -5,6 +5,7 @@ namespace portalium\workspace\components;
 use Yii;
 use yii\base\Component;
 use portalium\workspace\models\WorkspaceUser;
+use portalium\workspace\Module;
 
 class Workspace extends Component
 {
@@ -37,6 +38,8 @@ class Workspace extends Component
             $availableRoles = [];
         }
         $roles = [];
+        //add select
+        $roles[] = ['name' => Module::t('Select'), 'value' => ''];
         foreach (Yii::$app->authManager->getRoles() as $role) {
             if (in_array($role->name, $availableRoles)) {
                 $roles[] = $role;
