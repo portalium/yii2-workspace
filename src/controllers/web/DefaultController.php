@@ -95,7 +95,6 @@ class DefaultController extends WebController
             Yii::$app->session->addFlash('error', Module::t('Please set default role for workspace module.'));
             return $this->redirect(['index'], 302);
         }
-
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
 
@@ -105,7 +104,6 @@ class DefaultController extends WebController
         } else {
             $model->loadDefaultValues();
         }
-
         return $this->render('create', [
             'model' => $model,
         ]);
