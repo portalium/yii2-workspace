@@ -2,6 +2,7 @@
 
 namespace portalium\workspace\components;
 
+use portalium\site\models\Setting;
 use portalium\workspace\models\WorkspaceUser;
 use Yii;
 use yii\base\BaseObject;
@@ -38,7 +39,7 @@ class TriggerActions extends BaseObject
     public function onRoleDeleteBefore($event)
     {
         ['item' => $item] = $event->payload;
-        Yii::warning($item->name);
+
         $this->deleteWorkspaceUserRoles($item->name);
     }
 
@@ -54,8 +55,8 @@ class TriggerActions extends BaseObject
     public function onRoleUpdateBefore($event)
     {
         ['item' => $item, 'oldItem' => $oldItem] = $event->payload;
-        Yii::warning($item->name);
-        Yii::warning($oldItem->name);
+
+
         $this->updateWorkspaceUserRoles($item->name, $oldItem->name);
     }
 
@@ -66,6 +67,45 @@ class TriggerActions extends BaseObject
         foreach ($workspaceUserRoles as $workspaceUserRole) {
             $workspaceUserRole->role = $roleName;
             $workspaceUserRole->save();
+        }
+    }
+
+    public function onSettingUpdateAfter($event)
+    {
+        ['data' => $data, 'changedAttributes' => $changedAttributes] = $event->payload;
+
+        if($data['name'] == 'workspace::available_roles'){
+            $oldRoles = [];
+            if(isset($changedAttributes['value']) && is_array($changedAttributes['value'])){
+                foreach (json_decode($changedAttributes['value']) as $module => $roles) {
+                    foreach ($roles as $role) {
+                        $oldRoles[] = $role;
+                    }
+                }
+            }
+            $newRoles = [];
+            if(isset($data['value']) && is_array($data['value'])){
+                foreach (json_decode($data['value']) as $module => $roles) {
+                    foreach ($roles as $role) {
+                        $newRoles[] = $role;
+                    }
+                }
+            }
+
+            $deletedRoles = array_diff($oldRoles, $newRoles);
+            if($deletedRoles){
+                foreach ($deletedRoles as $role) {
+                    $checkRolesWorkspaceUser = WorkspaceUser::find()->where(['role' => $role])->all();
+                    if($checkRolesWorkspaceUser){
+                        $settingModel = Setting::findOne(['name' => 'workspace::available_roles']);
+                        $settingModel->value = $changedAttributes['value'];
+                        $settingModel->save();
+                        Yii::$app->session->addFlash('error', Yii::t('workspace', 'You can not delete this role because it is used in workspace.'));
+                        break;
+                    }
+                }
+            }
+            
         }
     }
 }

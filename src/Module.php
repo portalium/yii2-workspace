@@ -63,5 +63,6 @@ class Module extends \portalium\base\Module
     {
         Event::on($this::className(), \portalium\rbac\Module::EVENT_ITEM_DELETE, [new TriggerActions(), 'onRoleDeleteBefore']);
         Event::on($this::className(), \portalium\rbac\Module::EVENT_ITEM_UPDATE, [new TriggerActions(), 'onRoleUpdateBefore']);
+        Event::on($this::className(), \portalium\site\Module::EVENT_SETTING_UPDATE, [new TriggerActions(), 'onSettingUpdateAfter']);
     }
 }
