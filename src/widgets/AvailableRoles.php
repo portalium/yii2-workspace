@@ -22,7 +22,6 @@ class AvailableRoles extends InputWidget
             $input = 'activeHiddenInput';
             echo Html::$input($this->model, $this->attribute, $this->options);
         }
-
         $supportWorkspaceModules = Yii::$app->workspace->getSupportModules();
         $checkListGroup = [];
         foreach ($supportWorkspaceModules as $key => $value) {
@@ -35,17 +34,6 @@ class AvailableRoles extends InputWidget
             }
             
             $checkListGroup[$key] = $checkList;
-        }
-
-        $attributes = [];
-        foreach ($checkListGroup as $key => $value) {
-            $attributes[] = $key;
-        }
-        $dynamicModel = new \yii\base\DynamicModel($attributes);
-        $dynamicModel->addRule($attributes, 'safe');
-        //add label
-        foreach ($supportWorkspaceModules as $key => $value) {
-            $dynamicModel->attributeLabels()[$key] = $value;
         }
         $values = $this->model->value;
         try {
@@ -61,7 +49,6 @@ class AvailableRoles extends InputWidget
                 'label' => $supportWorkspaceModules[$key],
                 'content' => Html::checkboxList('Setting[workspace-'. $this->settingIndex .'][value]['. $key .'][]', $values[$key] ?? []
                     , $checkListGroup[$key], ['class' => 'form-control']),
-
             ];
         }
 
@@ -71,6 +58,11 @@ class AvailableRoles extends InputWidget
             
         ]);
 
+        Yii::$app->view->registerJs(
+            '
+                $("[name=\"Setting[workspace-'. $this->settingIndex .'][value]\"]").val("");            
+            '
+        );
     
     }
 

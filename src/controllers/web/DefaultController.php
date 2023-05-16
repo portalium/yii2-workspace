@@ -92,10 +92,9 @@ class DefaultController extends WebController
         }
         $model = new Workspace();
         if(!Yii::$app->workspace->checkSupportRoles()) {
-            Yii::$app->session->setFlash('error', Module::t('Please set default role for workspace module.'));
-            return $this->redirect(['index']);
+            Yii::$app->session->addFlash('error', Module::t('Please set default role for workspace module.'));
+            return $this->redirect(['index'], 302);
         }
-
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
 
@@ -105,7 +104,6 @@ class DefaultController extends WebController
         } else {
             $model->loadDefaultValues();
         }
-
         return $this->render('create', [
             'model' => $model,
         ]);
@@ -414,7 +412,7 @@ class DefaultController extends WebController
                 return $this->asJson(['output' => [], 'selected' => '']);
             }
             $availableRoles = Yii::$app->setting->getValue('workspace::available_roles');
-            Yii::warning($availableRoles);
+
             $availableRoles = $availableRoles[$moduleName];
             foreach ($availableRoles as $key => $value) {
                 $out[] = ['id' => $value, 'name' => $value];
