@@ -1,6 +1,6 @@
 {
-	"name" : "portalium/portalium-workspace",
-	"description" : "Module Workspace for Portalium",
+	"name" : "portalium/yii2-workspace",
+	"description" : "Workspace Module for Portalium (Yii2)",
 	"type" : "portalium-module",
 	"license": "MIT",
 	"homepage" : "https://portalium.dev",
@@ -16,12 +16,12 @@
 		}
 	],
 	"support" : {
-		"issues" : "https://github.com/portalium/portalium-workspace/issues"
+		"issues" : "https://github.com/portalium/yii2-workspace/issues"
 	},
 	"minimum-stability": "dev",
 	"require": {
-		"portalium/portalium-site": "*",
-		"portalium/portalium-user": "*"
+		"portalium/yii2-site": "*",
+		"portalium/yii2-user": "*"
     },
 	"autoload" : {
 		"psr-4" : {

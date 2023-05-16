@@ -7,6 +7,8 @@ use portalium\workspace\components\TriggerActions;
 
 class Module extends \portalium\base\Module
 {
+    const EVENT_ROLE_UPDATE_AFTER = 'roleUpdateAfter';
+    
     public $apiRules = [
         [
             'class' => 'yii\rest\UrlRule',
