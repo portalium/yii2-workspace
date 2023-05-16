@@ -6,7 +6,7 @@ use yii\web\AssetBundle;
 
 class AssignmentAsset extends AssetBundle
 {
-    public $sourcePath = '@vendor/portalium/portalium-workspace/src/assets/';
+    public $sourcePath = '@vendor/portalium/yii2-workspace/src/assets/';
 
     public $js = [
         'assignment.js'

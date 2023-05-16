@@ -412,7 +412,7 @@ class DefaultController extends WebController
                 return $this->asJson(['output' => [], 'selected' => '']);
             }
             $availableRoles = Yii::$app->setting->getValue('workspace::available_roles');
-            Yii::warning($availableRoles);
+
             $availableRoles = $availableRoles[$moduleName];
             foreach ($availableRoles as $key => $value) {
                 $out[] = ['id' => $value, 'name' => $value];
