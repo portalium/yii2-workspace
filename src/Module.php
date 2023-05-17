@@ -8,6 +8,7 @@ use portalium\workspace\components\TriggerActions;
 class Module extends \portalium\base\Module
 {
     const EVENT_ROLE_UPDATE_AFTER = 'roleUpdateAfter';
+    const EVENT_USER_CREATE_AFTER = 'userCreateAfter';
     
     public $apiRules = [
         [
@@ -66,5 +67,6 @@ class Module extends \portalium\base\Module
         Event::on($this::className(), \portalium\rbac\Module::EVENT_ITEM_DELETE, [new TriggerActions(), 'onRoleDeleteBefore']);
         Event::on($this::className(), \portalium\rbac\Module::EVENT_ITEM_UPDATE, [new TriggerActions(), 'onRoleUpdateBefore']);
         Event::on($this::className(), \portalium\site\Module::EVENT_SETTING_UPDATE, [new TriggerActions(), 'onSettingUpdateAfter']);
+        Event::on($this::className(), \portalium\user\Module::EVENT_USER_CREATE, [new TriggerActions(), 'onUserCreateAfter']);
     }
 }
