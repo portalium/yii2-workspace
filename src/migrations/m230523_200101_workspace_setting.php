@@ -18,7 +18,7 @@ class m230523_200101_workspace_setting extends Migration
             'name' => 'workspace::available_roles',
             'label' => 'Available Roles',
             'type' => Form::TYPE_WIDGET,
-            'value' => $siteUserRole ? '{"storage":["' . $siteUserRole . ',' . $siteAdminRole . '"]}' : '',
+            'value' => $siteUserRole ? '{"storage":["' . $siteAdminRole . '", "' . $siteUserRole . '"]}' : '',
             'config' => json_encode([
                 'widget' => '\portalium\workspace\widgets\AvailableRoles',
                 'options' => [
