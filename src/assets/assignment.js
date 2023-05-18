@@ -6,9 +6,6 @@ $(document).ready(function() {
         var selectedValues = $('select[data-target="available"]').val();
         var selectedRole = $('#available-roles').val();
         var id_module = $('#module-list').val();
-        console.log(selectedValues);
-        console.log(selectedRole);
-        console.log(id_module);
 
         assignAction(selectedValues, selectedRole, id_workspace, '#roleModal', id_module, 'create');
         $.pjax.reload({
