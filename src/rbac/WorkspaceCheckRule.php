@@ -15,7 +15,7 @@ class WorkspaceCheckRule extends Rule
         if(Yii::$app->user->can('admin'))
             return true;
 
-        $activeWorkspaceId = WorkspaceUser::getActiveWorkspaceId();
+        $activeWorkspaceId = Yii::$app->workspace->id;
         if (!$activeWorkspaceId)
             return false;
 
