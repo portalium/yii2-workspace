@@ -71,7 +71,7 @@ class Workspace extends \yii\db\ActiveRecord
                 $workspaceUser->id_user = Yii::$app->user->id;
                 $workspaceUser->role = Yii::$app->setting->getValue($key . '::workspace::admin_role');
                 $workspaceUser->id_module = $key;
-                $activeWorkspaceId = WorkspaceUser::getActiveWorkspaceId();
+                $activeWorkspaceId = Yii::$app->workspace->id;
                 if ($activeWorkspaceId) {
                     $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
                 } else {
