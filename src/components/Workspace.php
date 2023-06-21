@@ -12,7 +12,7 @@ class Workspace extends Component
     
     public function checkOwner($id_workspace)
     {
-        $activeWorkspaceId = WorkspaceUser::getActiveWorkspaceId();
+        $activeWorkspaceId = Yii::$app->workspace->id;
         if (Yii::$app->user->can('workspaceWorkspaceFullAccess', ['id_module' => 'workspace'])) {
             return true;
         }
@@ -59,6 +59,18 @@ class Workspace extends Component
         }
 
         return $supportWorkspaceModules;
+    }
+
+    public function getId()
+    {
+        $workspace = WorkspaceUser::find()
+            ->where(['id_user' => Yii::$app->user->id])
+            ->andWhere(['status' => WorkspaceUser::STATUS_ACTIVE])
+            ->one();
+        if ($workspace) {
+            return $workspace->id_workspace;
+        }
+        return null;
     }
 
     public function checkSupportRoles()
