@@ -34,6 +34,12 @@ class m220220_170716_workspace_rbac extends Migration
             $auth->add($permissionObject);
             $auth->addChild($admin, $permissionObject);
         }
+
+        $workspaceWebDefaultSetWorkspace = $auth->getPermission('workspaceWebDefaultSetWorkspace');
+        $auth->addChild($auth->getRole('user'), $workspaceWebDefaultSetWorkspace);
+        
+
+
         
     }
 
