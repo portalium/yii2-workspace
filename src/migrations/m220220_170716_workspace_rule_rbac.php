@@ -24,6 +24,7 @@ class m220220_170716_workspace_rule_rbac extends Migration
             'workspaceWebDefaultAssign' => 'Assign to workspace',
             'workspaceWebDefaultAssignUpdate' => 'Update workspace assignment',
             'workspaceWebDefaultRemove' => 'Remove workspace assignment',
+            'workspaceWebDefaultSetWorkspace' => 'Workspace settings',
         ];
         
 

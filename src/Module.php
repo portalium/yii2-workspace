@@ -9,6 +9,8 @@ class Module extends \portalium\base\Module
 {
     const EVENT_ROLE_UPDATE_AFTER = 'roleUpdateAfter';
     const EVENT_USER_CREATE_AFTER = 'userCreateAfter';
+
+    const EVENT_WORKSPACE_CREATE_AFTER = 'workspaceCreateAfter';
     
     public $apiRules = [
         [
