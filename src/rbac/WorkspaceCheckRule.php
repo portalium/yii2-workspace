@@ -9,10 +9,10 @@ use yii\rbac\Rule;
 class WorkspaceCheckRule extends Rule
 {
     public $name = 'WorkspaceCheckRule';
-
+    
     public function execute($user, $item, $params)
     {
-        if (Yii::$app->user->can('admin'))
+        if(Yii::$app->user->can('admin'))
             return true;
 
         $activeWorkspaceId = Yii::$app->workspace->id;
@@ -21,9 +21,8 @@ class WorkspaceCheckRule extends Rule
 
         $permission = $item->name;
         $id_user = Yii::$app->user->id;
-
         $module = $params['id_module'];
-
+        
         $hasPermission = $this->checkAccess($activeWorkspaceId, $permission, $id_user, $module);
 
         return $hasPermission; // kullanıcının organizasyonda belirtilen izne sahip olup olmadığına göre true veya false döndür
@@ -46,13 +45,14 @@ class WorkspaceCheckRule extends Rule
         }
 
         foreach ($checkWorkspaceUser as $workspaceUser) {
-            $role = $auth->getRole($workspaceUser->role);
-            $permission = $auth->getPermission($permission);
-            if ($auth->hasChild($role, $permission)) {
-                return true;
-            }
+                $role = $auth->getRole($workspaceUser->role);
+                $permission = $auth->getPermission($permission);
+                if ($auth->hasChild($role, $permission)) {
+                    return true;            
+                }
         }
 
         return false;
     }
+    
 }

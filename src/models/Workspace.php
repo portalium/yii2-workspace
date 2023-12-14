@@ -5,6 +5,7 @@ namespace portalium\workspace\models;
 use Yii;
 use portalium\workspace\Module;
 use portalium\workspace\models\WorkspaceUser;
+use portalium\base\Event;
 
 /**
  * This is the model class for table "Workspace_workspace".
@@ -36,6 +37,14 @@ class Workspace extends \yii\db\ActiveRecord
             [['date_create', 'date_update'], 'safe'],
             [['name'], 'string', 'max' => 255],
         ];
+    }
+
+    public function init()
+    {
+        $this->on(self::EVENT_AFTER_INSERT, function($event) {
+            \Yii::$app->trigger(Module::EVENT_WORKSPACE_CREATE_AFTER, new Event(['payload' => $event->data]));
+            Event::trigger(Yii::$app->getModules(), Module::EVENT_WORKSPACE_CREATE_AFTER, new Event(['payload' => $event->data]));
+        }, $this);
     }
 
     /**
