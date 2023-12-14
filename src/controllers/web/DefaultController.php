@@ -363,15 +363,12 @@ class DefaultController extends WebController
             $workspaceUser->save();
         }
 
-        $workspaceUser = WorkspaceUser::findOne(['id_workspace_user' => $id, 'id_user' => Yii::$app->user->id]);
+        $workspaceUser = WorkspaceUser::findOne(['id_workspace_user' => $id]);
         if ($workspaceUser) {
             $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
             $workspaceUser->save();
         }
-        if (Yii::$app->request->referrer)
-            return $this->redirect(Yii::$app->request->referrer);
-        
-        return $this->goHome();
+        return $this->goBack(Yii::$app->request->referrer);
     }
 
     //get-users
