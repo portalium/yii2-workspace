@@ -42,7 +42,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         return Html::a(
                             Html::tag('i', '', ['class' => 'fa fa-thin fa-user']), 
                             ['assignment', 'id' => $model->id_workspace], 
-                            ['title' => Module::t('Assign'), 'class' => 'btn btn-warning btn-xs', 'style' => 'padding: 2px 9px 2px 9px;'] 
+                            ['title' => Module::t('Assign'), 'class' => 'btn btn-warning btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;'] 
                         );
                     },
                 ],
