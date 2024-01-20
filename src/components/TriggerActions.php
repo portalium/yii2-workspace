@@ -91,8 +91,8 @@ class TriggerActions extends BaseObject
                 foreach ($deletedRoles as $deletedRole) {
                     $checkRolesWorkspaceUser = WorkspaceUser::find()->where(['role' => $deletedRole['role'], 'id_module' => $deletedRole['module']])->one();
                     if($checkRolesWorkspaceUser){
-                        $settingModel = Setting::findOne(['name' => 'workspace::available_roles']);
-                        $settingModel->value = $changedAttributes['value'];
+                        $settingModel = Yii::$app->setting->getValue('workspace::available_roles');
+                        $settingModel = $changedAttributes['value'];
                         $settingModel->save();
                         Yii::$app->session->addFlash('error', Yii::t('workspace', 'You can not delete this role because it is used in workspace.'));
                         break;

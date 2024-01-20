@@ -23,7 +23,8 @@ class m230523_200101_workspace_setting extends Migration
                 'widget' => '\portalium\workspace\widgets\AvailableRoles',
                 'options' => [
                 ]
-            ])
+                ]),
+            'is_preference' => 0
         ]);
         if ($siteUserRole) {
             $workspace = new Workspace();
