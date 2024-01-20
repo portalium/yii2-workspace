@@ -39,7 +39,7 @@ class Workspace extends Component
         }
         $roles = [];
         //add select
-        $roles[] = ['name' => Module::t('Select'), 'value' => ''];
+        // $roles[] = ['name' => Module::t('Select'), 'value' => ''];
         foreach (Yii::$app->authManager->getRoles() as $role) {
             if (in_array($role->name, $availableRoles)) {
                 $roles[] = $role;
@@ -82,9 +82,11 @@ class Workspace extends Component
                 $role = Yii::$app->setting->getValue($key . '::workspace::admin_role');
                 $defaultRole = Yii::$app->setting->getValue($key . '::workspace::default_role');
                 if (!$role || !$defaultRole) {
+                    
                     return false;
                 }
             } catch (\Exception $e) {
+                var_dump($e->getMessage());
                 return false;
             }
         }
