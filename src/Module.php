@@ -22,6 +22,7 @@ class Module extends \portalium\base\Module
     ];
     public static $tablePrefix = 'workspace_';
     public static $name = 'Workspace';
+    public static $supportWorkspace = true;
     public static function moduleInit()
     {
         self::registerTranslation('workspace', '@portalium/workspace/messages', [
