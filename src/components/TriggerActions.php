@@ -114,7 +114,6 @@ class TriggerActions extends BaseObject
         $user = User::findOne($id_user);
         $workspaceModel = new Workspace();
         $workspaceModel->name = 'Workspace of ' . $user->username;
-        $workspaceModel->status = WorkspaceUser::STATUS_ACTIVE;
         $workspaceModel->save();
         Event::trigger(Yii::$app->getModules(), Module::EVENT_USER_CREATE_AFTER, new Event(['payload' => [
             'id_user' => $id_user,
