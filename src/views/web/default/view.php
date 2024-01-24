@@ -23,6 +23,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'actions' => [
             'header' => [
                 Html::a(Module::t( ''), ['update', 'id' => $model->id_workspace], ['class' => 'fa fa-pencil btn btn-primary']),
+                Html::a(Module::t( ''), ['assignment', 'id' => $model->id_workspace], ['class' => 'fa fa-user btn btn-warning']),
                 Html::a(Module::t( ''), ['delete', 'id' => $model->id_workspace], [
                     'class' => 'fa fa-trash btn btn-danger',
                     'data' => [
