@@ -93,4 +93,27 @@ class Workspace extends Component
         return true;
     }
 
+    public function can($module, $permission, $params = [])
+    {
+        $workspaceRoles = WorkspaceUser::find()
+            ->where(['id_workspace' => Yii::$app->workspace->id, 'id_user' => Yii::$app->user->id, 'id_module' => $module])->groupBy('role')->all();
+        if (!$workspaceRoles) {
+            return false;
+        }
+        if (isset($params['model']) && $params['model']->id_workspace != Yii::$app->workspace->id) {
+            return false;
+        }
+
+        foreach ($workspaceRoles as $workspaceRole) {
+            $auth = Yii::$app->authManager;
+            $role = $auth->getRole($workspaceRole->role);
+            $permissions = $auth->getPermissionsByRole($role->name);
+            if (isset($permissions[$permission])) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
 }

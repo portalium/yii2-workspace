@@ -355,7 +355,8 @@ class DefaultController extends WebController
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
         if ($id == 0) {
-            return $this->goBack(Yii::$app->request->referrer);
+            // return $this->goBack(Yii::$app->request->referrer);
+            return $this->redirect(Yii::$app->request->referrer);
         }
         $workspaceUser = WorkspaceUser::findOne(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE]);
         if ($workspaceUser) {
@@ -368,7 +369,8 @@ class DefaultController extends WebController
             $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
             $workspaceUser->save();
         }
-        return $this->goBack(Yii::$app->request->referrer);
+        // return $this->goBack(Yii::$app->request->referrer);
+        return $this->redirect(Yii::$app->request->referrer);
     }
 
     //get-users
@@ -381,14 +383,14 @@ class DefaultController extends WebController
         if (!$id_workspace || !$role) {
             return json_encode([]);
         }
-        $users = $authManager->getUserIdsByRole($role->name);
+        
         $workspaceUsers = WorkspaceUser::find()->where(['id_workspace' => $id_workspace])->groupBy('id_user')->all();
         $workspaceUsersArray = [];
         foreach ($workspaceUsers as $workspaceUser) {
             $workspaceUsersArray[] = $workspaceUser->id_user;
         }
        // $users = array_diff($users, $workspaceUsersArray);
-        $users = User::find()->where(['id_user' => $users])->all();
+        $users = User::find()->all();
         $users = ArrayHelper::map($users, 'id_user', 'username');
         return json_encode($users);
     }
