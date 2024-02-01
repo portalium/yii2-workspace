@@ -2,6 +2,7 @@
 
 namespace portalium\workspace\components;
 
+use portalium\base\Exception;
 use Yii;
 use yii\base\Component;
 use portalium\workspace\models\WorkspaceUser;
@@ -53,6 +54,8 @@ class Workspace extends Component
         $supportWorkspaceModules = [];
         
         foreach ($allModulesId as $key => $value) {
+           
+            
             if (isset(Yii::$app->getModule($key)->className()::$supportWorkspace) && Yii::$app->getModule($key)->className()::$supportWorkspace) {
                 $supportWorkspaceModules[$key] = Yii::$app->getModule($key)->className()::$supportWorkspace;
             }
@@ -86,7 +89,6 @@ class Workspace extends Component
                     return false;
                 }
             } catch (\Exception $e) {
-                var_dump($e->getMessage());
                 return false;
             }
         }
@@ -107,12 +109,36 @@ class Workspace extends Component
         foreach ($workspaceRoles as $workspaceRole) {
             $auth = Yii::$app->authManager;
             $role = $auth->getRole($workspaceRole->role);
+            if (!$role) {
+                continue;
+            }
             $permissions = $auth->getPermissionsByRole($role->name);
             if (isset($permissions[$permission])) {
                 return true;
             }
+            $childRoles = $auth->getChildRoles($role->name);
+            foreach ($childRoles as $childRole) {
+                $permissions = $auth->getPermissionsByRole($childRole->name);
+                if (isset($permissions[$permission])) {
+                    return true;
+                }
+            }
         }
         
+        return false;
+    }
+
+    public function isAvailableRole($module, $role)
+    {
+        $availableRoles = Yii::$app->setting->getValue('workspace::available_roles');
+        if (isset($availableRoles[$module])) {
+            $availableRoles = $availableRoles[$module];
+        } else {
+            $availableRoles = [];
+        }
+        if (in_array($role, $availableRoles)) {
+            return true;
+        }
         return false;
     }
 

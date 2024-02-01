@@ -28,7 +28,7 @@ class TriggerActions extends BaseObject
     private function deleteWorkspaceUserRoles($roleName)
     {
         $workspaceUserRoles = WorkspaceUser::find()->where(['role' => $roleName])->all();
-
+        
         foreach ($workspaceUserRoles as $workspaceUserRole) {
             $workspaceUserRole->delete();
         }
@@ -91,11 +91,12 @@ class TriggerActions extends BaseObject
                 foreach ($deletedRoles as $deletedRole) {
                     $checkRolesWorkspaceUser = WorkspaceUser::find()->where(['role' => $deletedRole['role'], 'id_module' => $deletedRole['module']])->one();
                     if($checkRolesWorkspaceUser){
-                        $settingModel = Yii::$app->setting->getValue('workspace::available_roles');
-                        $settingModel = $changedAttributes['value'];
-                        $settingModel->save();
-                        Yii::$app->session->addFlash('error', Yii::t('workspace', 'You can not delete this role because it is used in workspace.'));
-                        break;
+//                        $settingModel = Yii::$app->setting->getSetting('workspace::available_roles');
+//                        $settingModel->value = $changedAttributes['value'];
+//                        if($settingModel->save()) {
+//                            Yii::$app->session->addFlash('error', Yii::t('workspace', 'You can not delete this role because it is used in workspace.'));
+//                        }
+//                        break;
                     }
                 }
             }else{
@@ -113,7 +114,8 @@ class TriggerActions extends BaseObject
         ['id' => $id_user] = $event->payload;
         $user = User::findOne($id_user);
         $workspaceModel = new Workspace();
-        $workspaceModel->name = 'Workspace of ' . $user->username;
+        $workspaceModel->name = 'Home';
+        $workspaceModel->id_user = $user->id_user;
         $workspaceModel->save();
         Event::trigger(Yii::$app->getModules(), Module::EVENT_USER_CREATE_AFTER, new Event(['payload' => [
             'id_user' => $id_user,

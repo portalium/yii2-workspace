@@ -6,12 +6,14 @@ use Yii;
 use portalium\workspace\Module;
 use portalium\workspace\models\WorkspaceUser;
 use portalium\base\Event;
+use portalium\user\models\User;
 
 /**
  * This is the model class for table "Workspace_workspace".
  *
  * @property int $id_workspace
  * @property string $name
+ * @property string $id_user
  * @property string $date_create
  * @property string $date_update
  *
@@ -34,6 +36,7 @@ class Workspace extends \yii\db\ActiveRecord
     {
         return [
             [['name'], 'required'],
+            [['id_user'], 'integer'],
             [['date_create', 'date_update'], 'safe'],
             [['name'], 'string', 'max' => 255],
         ];
@@ -55,6 +58,7 @@ class Workspace extends \yii\db\ActiveRecord
         return [
             'id_workspace' => Module::t('Id Workspace'),
             'name' => Module::t('Name'),
+            'id_user' => Module::t('Id User'),
             'date_create' => Module::t('Date Create'),
             'date_update' => Module::t('Date Update'),
         ];
@@ -70,6 +74,14 @@ class Workspace extends \yii\db\ActiveRecord
         return $this->hasMany(WorkspaceUser::class, ['id_workspace' => 'id_workspace'])->groupBy('');
     }
 
+    /** 
+     * {@inheritdoc}
+     */
+    public function getUser()
+    {
+        return $this->hasOne(User::class, ['id_user' => 'id_user']);
+    }
+        
     public function afterSave($insert, $changedAttributes)
     {
         if ($insert) {
@@ -94,16 +106,29 @@ class Workspace extends \yii\db\ActiveRecord
         parent::afterSave($insert, $changedAttributes);
     }
 
-    public static function find()
+    public function beforeDelete()
     {
-        $query = parent::find();
-
-        if (!Yii::$app->user->can('workspaceWorkspaceFindAll', ['id_module' => 'workspace'])) {
-            $query->innerJoinWith('workspaceUsers');
-            $query->andWhere([Module::$tablePrefix . 'workspace_user.id_user' => Yii::$app->user->id]);
+        $invitations = Invitation::find()->where(['id_workspace' => $this->id_workspace])->all();
+        foreach ($invitations as $invitation) {
+            $invitation->delete();
         }
-
-        return $query;
+        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace' => $this->id_workspace])->all();
+        foreach ($workspaceUsers as $workspaceUser) {
+            $workspaceUser->delete();
+        }
+        return parent::beforeDelete();
     }
+
+    /*  public static function find()
+     {
+         $query = parent::find();
+
+         if (!Yii::$app->user->can('workspaceWorkspaceFindAll', ['id_module' => 'workspace'])) {
+             $query->innerJoinWith('workspaceUsers');
+             $query->andWhere([Module::$tablePrefix . 'workspace_user.id_user' => Yii::$app->user->id]);
+         }
+
+         return $query;
+     } */
     
 }

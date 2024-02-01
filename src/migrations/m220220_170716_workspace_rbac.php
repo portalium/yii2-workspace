@@ -25,6 +25,9 @@ class m220220_170716_workspace_rbac extends Migration
             'workspaceWebDefaultSetWorkspace' => 'Workspace settings',
             'workspaceWorkspaceFindAll' => 'Find all workspaces',
             'workspaceWorkspaceFullAccess' => 'Full access to workspaces',
+            'workspaceWebDefaultCreateInvitation' => 'Create invitation',
+            'workspaceWebDefaultResendInvitation' => 'Resend invitation',
+            'workspaceWebDefaultDeleteInvitation' => 'Delete invitation'
         ];
         
         

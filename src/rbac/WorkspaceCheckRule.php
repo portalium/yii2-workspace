@@ -12,7 +12,7 @@ class WorkspaceCheckRule extends Rule
     
     public function execute($user, $item, $params)
     {
-        if(Yii::$app->user->can('admin'))
+        if(Yii::$app->user->can('workspaceWorkspaceFullAccess'))
             return true;
 
         $activeWorkspaceId = Yii::$app->workspace->id;
@@ -22,9 +22,11 @@ class WorkspaceCheckRule extends Rule
         $permission = $item->name;
         $id_user = Yii::$app->user->id;
         $module = $params['id_module'];
-        
-        $hasPermission = $this->checkAccess($activeWorkspaceId, $permission, $id_user, $module);
-
+        if ($module == 'storage')
+            $hasPermission = $this->checkAccess($activeWorkspaceId, $permission, $id_user, $module);
+        else {
+            $hasPermission = $this->checkAccessWorkspace($activeWorkspaceId, $permission, $id_user, $module, $params);
+        }
         return $hasPermission; // kullanıcının organizasyonda belirtilen izne sahip olup olmadığına göre true veya false döndür
     }
 
@@ -55,4 +57,17 @@ class WorkspaceCheckRule extends Rule
         return false;
     }
     
+    protected function checkAccessWorkspace($activeWorkspaceId, $permission, $id_user, $module, $params)
+    {
+        $auth = Yii::$app->authManager;
+        if (!isset($params['model'])){
+            return false;
+        }
+        $model = $params['model'];
+        if ($model->id_user == $id_user) {
+            return true;
+        }
+
+        return false;
+    }
 }
