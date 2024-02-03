@@ -43,8 +43,28 @@ class DefaultController extends WebController
 
         $searchModel = new WorkspaceSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
-        if (!\Yii::$app->user->can('workspaceWorkspaceFullAccess'))
-            $dataProvider->query->andWhere([Module::$tablePrefix . 'workspace.id_user' => Yii::$app->user->id]);
+
+        $dataProvider->query->andWhere([Module::$tablePrefix . 'workspace.id_user' => Yii::$app->user->id]);
+
+        return $this->render('index', [
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    /**
+     * Lists all Workspace models.
+     *
+     * @return string
+     */
+    public function actionManage()
+    {
+        if (!\Yii::$app->user->can('workspaceWorkspaceFullAccess')) {
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
+        }
+
+        $searchModel = new WorkspaceSearch();
+        $dataProvider = $searchModel->search($this->request->queryParams);
 
         return $this->render('index', [
             'searchModel' => $searchModel,

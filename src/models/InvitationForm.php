@@ -25,8 +25,9 @@ class InvitationForm extends Model
     public function rules()
     {
         return [
-            [['id_workspace', 'emails'], 'required'],
+            [['id_workspace'], 'required'],
             [['id_workspace'], 'integer'],
+            [['emails'], 'safe'],
             [['date_expire', 'id_workspace'], 'safe'],
             [['id_workspace'], 'exist', 'skipOnError' => true, 'targetClass' => Workspace::class, 'targetAttribute' => ['id_workspace' => 'id_workspace']],
         ];

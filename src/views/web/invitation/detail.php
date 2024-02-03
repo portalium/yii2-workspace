@@ -10,6 +10,7 @@ use yii\widgets\DetailView;
 use portalium\theme\widgets\Panel;
 use portalium\widgets\Pjax;
 use portalium\workspace\models\Invitation;
+use portalium\workspace\models\InvitationRole;
 use portalium\workspace\models\Workspace;
 use yii\helpers\Url;
 
@@ -17,7 +18,8 @@ use yii\helpers\Url;
 /** @var portalium\workspace\models\Workspace $model */
 
 $this->title = $model->workspace->name;
-$this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['/workspace/default/index']];
+$this->params['breadcrumbs'][] = ['label' => Module::t('Invitations'), 'url' => ['index', 'id' => $model->id_workspace]];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 $this->registerCss(
@@ -36,39 +38,25 @@ $this->registerCss(
 
         <?= GridView::widget([
             'dataProvider' => $dataProvider,
-            'filterModel' => $searchModel,
+            // 'filterModel' => $searchModel,
             'columns' => [
                 ['class' => 'yii\grid\SerialColumn'],
                 'email',
-                /* 'invitation_token', */
-                [
-                    'attribute' => 'invitation_token',
-                    'label' => Module::t('Invitation Url'),
-                    'format' => 'raw',
-                    'value' => function ($model) {
-                        return Html::a(
-                            Url::toRoute(['accept', 'token' => $model->invitation_token], true),
-                            Url::toRoute(['accept', 'token' => $model->invitation_token], true),
-                            ['target' => '_blank']
-                        );
-                    }
-                ],
                 [
                     'attribute' => 'status',
                     'label' => Module::t('Status'),
                     'format' => 'raw',
                     'value' => function ($model) {
-                        return Invitation::getStatusList()[$model->status];
+                        return InvitationRole::getStatusList()[$model->status];
                     },
-                    'filter' => Invitation::getStatusList()
+                    'filter' => InvitationRole::getStatusList()
                 ],
-                'date_expire',
                 [
                     'class' => ActionColumn::className(),
-                    'urlCreator' => function ($action, Invitation $model, $key, $index, $column) {
+                    'urlCreator' => function ($action, InvitationRole $model, $key, $index, $column) {
                         return Url::toRoute([$action, 'id' => $model->id_invitation]);
                     },
-                    'template' => '{delete} {resend} {update}',
+                    'template' => '{delete} {resend}',
                     'buttons' => [
                         'resend' => function ($url, $model, $key) {
                             return Html::a(
@@ -81,13 +69,6 @@ $this->registerCss(
                             return Html::button(
                                 Html::tag('i', '', ['class' => 'fa fa-trash']),
                                 ['class' => 'btn btn-danger btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;', 'onclick' => 'deleteInvitation(' . $model->id_invitation . ')']
-                            );
-                        },
-                        'update' => function ($url, $model, $key) {
-                            return Html::a(
-                                Html::tag('i', '', ['class' => 'fa fa-pencil']),
-                                ['update', 'id' => $model->id_invitation],
-                                ['class' => 'btn btn-primary btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
                             );
                         },
                     ],

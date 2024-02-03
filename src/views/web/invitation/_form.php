@@ -23,16 +23,32 @@ $this->registerCss(
 );
 $form = ActiveForm::begin();
 Panel::begin([
-    'title' => ($model->isNewRecord) ? Module::t('Create Workspace') : $model->workspace->name,
+    'title' => ($modelInvitation->isNewRecord) ? Module::t('Create Workspace') : $modelInvitation->workspace->name,
     'actions' => [
         'header' => [],
         'footer' => [
-            ($model->isNewRecord) ?  Html::submitButton(Module::t('Save'), ['class' => 'btn btn-success']) :
+            ($modelInvitation->isNewRecord) ?  Html::submitButton(Module::t('Save'), ['class' => 'btn btn-success']) :
                 Html::submitButton(Module::t('Update'), ['class' => 'btn btn-primary'])
         ]
     ]
 ]);
-echo $form->field($model, 'email')->textInput(['maxlength' => true, 'readonly' => ($model->isNewRecord) ? false : true]);
+echo $form->field($model, 'emails')->widget(Select2::className(), [
+    'name' => 'color_3',
+    'data' => array_map(function ($item) {
+        return Module::t($item);
+    }, $usersEmail),
+    'maintainOrder' => true,
+    'toggleAllSettings' => [
+        'selectLabel' => '<i class="fa fa-check-circle"></i> Tag All',
+        'unselectLabel' => '<i class="fa fa-times-circle"></i> Untag All',
+        'selectOptions' => ['class' => 'text-success'],
+        'unselectOptions' => ['class' => 'text-danger'],
+    ],
+    'options' => ['placeholder' => 'Select or add a user ...', 'multiple' => true, 'style' => 'width:100%'],
+    'pluginOptions' => [
+        'tags' => true,
+    ],
+]);
 
 echo $form->field($model, 'date_expire')->widget(DatePicker::classname(), [
     'dateFormat' => 'yyyy-MM-dd',

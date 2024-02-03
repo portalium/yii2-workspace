@@ -13,7 +13,6 @@ use portalium\workspace\models\Invitation;
  * @property string $module
  * @property string $role
  * @property string $invitation_token
- * @property int $status
  * @property int $id_user
  * @property string $date_create
  * @property string $date_expire
@@ -29,8 +28,8 @@ class InvitationSearch extends Invitation
     public function rules()
     {
         return [
-            [['id_invitation', 'id_workspace', 'status', 'id_user'], 'integer'],
-            [['email', 'module', 'role', 'invitation_token', 'date_create', 'date_expire'], 'safe'],
+            [['id_invitation', 'id_workspace', 'id_user'], 'integer'],
+            [['invitation_token', 'date_create', 'date_expire'], 'safe'],
         ];
     }
 
@@ -62,15 +61,12 @@ class InvitationSearch extends Invitation
         // grid filtering conditions
         $query->andFilterWhere([
             'id_workspace' => $this->id_workspace,
-            'status' => $this->status,
             'id_user' => $this->id_user,
             'date_create' => $this->date_create,
             'date_expire' => $this->date_expire
         ]);
 
-        $query->andFilterWhere(['like', 'email', $this->email])
-            ->andFilterWhere(['like', 'module', $this->module])
-            ->andFilterWhere(['like', 'role', $this->role])
+        $query
             ->andFilterWhere(['like', 'invitation_token', $this->invitation_token]);
 
         return $dataProvider;

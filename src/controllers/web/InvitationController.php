@@ -12,7 +12,9 @@ use portalium\workspace\models\Workspace;
 use portalium\workspace\models\Invitation;
 use portalium\workspace\models\WorkspaceUser;
 use portalium\web\Controller as WebController;
+use portalium\workspace\models\InvitationRole;
 use portalium\workspace\models\InvitationSearch;
+use portalium\workspace\models\InvitationForm;
 
 class InvitationController extends WebController
 {
@@ -106,31 +108,15 @@ class InvitationController extends WebController
                 if (empty($model->emails)) {
                     return $this->redirect(['index', 'id' => $model->id_workspace]);
                 }
-                foreach ($model->emails as $email) {
-                    $invitationToken = Yii::$app->security->generateRandomString();
-                    $modules = Yii::$app->request->post('DynamicModel');
-                    foreach ($modules as $key => $value) {
-                        if ($value == 'none' || $value == null || $value == '' || !Yii::$app->workspace->isAvailableRole($key, $value) == false) {
-                            continue;
-                        }
-                        $invitationModel = new Invitation();
-                        $invitationModel->id_workspace = $model->id_workspace;
-                        $invitationModel->email = $email;
-                        $invitationModel->invitation_token = $invitationToken;
-                        $invitationModel->date_create = date('Y-m-d H:i:s');
-                        $invitationModel->module = $key;
-                        $invitationModel->role = $value;
-                        $invitationModel->status = Invitation::STATUS_PENDING;
-                        $invitationModel->id_user = Yii::$app->user->id;
-                        $invitationModel->date_expire = $model->date_expire;
+                $invitationModel = new Invitation();
+                $invitationModel->id_workspace = $model->id_workspace;
+                $invitationModel->date_create = date('Y-m-d H:i:s');
+                $invitationModel->date_expire = $model->date_expire;
+                $invitationModel->id_user = Yii::$app->user->id;
+                $invitationModel->invitation_token = Yii::$app->security->generateRandomString();
 
-                        if ($invitationModel->validate() && $invitationModel->save()) {
-                            $invitationModel->sendInvitation();
-                        } else {
-                            Yii::$app->session->addFlash('error', Module::t('Invitation not sent.'));
-                        }
-                    }
-                    Yii::$app->session->addFlash('success', Module::t('Invitation sent successfully.'));
+                if ($invitationModel->validate() && $invitationModel->save()) {
+                    $this->createInvitation($model, $invitationModel);
                 }
             }
         } else {
@@ -141,6 +127,38 @@ class InvitationController extends WebController
     }
 
     /**
+     * Creates a new Invitation model.
+     * If creation is successful, the browser will be redirected to the 'index' page.
+     * @param int $id_workspace Id Workspace
+     * @return string|\yii\web\Response
+     * @throws NotFoundHttpException if the model cannot be found
+     */
+    private function createInvitation($model, $invitationModel)
+    {
+        foreach ($model->emails as $email) {
+            $modules = Yii::$app->request->post('DynamicModel');
+            foreach ($modules as $key => $value) {
+                if ($value == 'none' || $value == null || $value == '' || Yii::$app->workspace->isAvailableRole($key, $value) == false) {
+                    continue;
+                }
+                $invitationRoleModel = new InvitationRole();
+                $invitationRoleModel->id_workspace = $invitationModel->id_workspace;
+                $invitationRoleModel->id_invitation = $invitationModel->id_invitation;
+                $invitationRoleModel->email = $email;
+                $invitationRoleModel->module = $key;
+                $invitationRoleModel->role = $value;
+                $invitationRoleModel->status = InvitationRole::STATUS_PENDING;
+
+                if ($invitationRoleModel->validate() && $invitationRoleModel->save()) {
+                    $invitationRoleModel->sendInvitation();
+                } else {
+                }
+            }
+        }
+        Yii::$app->session->addFlash('success', Module::t('Invitation sent successfully.'));
+    }
+
+    /**
      * Resend a single Invitation model.
      * @param int $id_invitation Id Invitation
      * @return string|\yii\web\Response
@@ -148,8 +166,8 @@ class InvitationController extends WebController
      */
     public function actionResend($id)
     {
-        $model = Invitation::findOne($id);
-        if (!\Yii::$app->user->can('workspaceWebDefaultResendInvitation', ['id_module' => 'workspace', 'model' => $this->findWorkspace($model->id_workspace)])) {
+        $model = InvitationRole::findOne($id);
+        if (!\Yii::$app->user->can('workspaceWebDefaultResendInvitation', ['id_module' => 'workspace', 'model' => $this->findWorkspace($model->invitation->id_workspace)])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
         if ($model) {
@@ -186,11 +204,11 @@ class InvitationController extends WebController
             Yii::$app->session->addFlash('success', Module::t('Invitation deleted successfully.'));
         } else {
             Yii::$app->session->addFlash('error', Module::t('Invitation not deleted.'));
-            if (Yii::$app->request->isAjax){
+            if (Yii::$app->request->isAjax) {
                 return $this->asJson(['error' => Module::t('Invitation not deleted.')]);
             }
         }
-        if (Yii::$app->request->isAjax){
+        if (Yii::$app->request->isAjax) {
             return $this->asJson(['success' => Module::t('Invitation deleted successfully.')]);
         }
         return $this->redirect(['index', 'id' => $model->id_workspace]);
@@ -208,36 +226,38 @@ class InvitationController extends WebController
      */
     public function actionAccept($token)
     {
-        $invitations = Invitation::find()->where(['invitation_token' => $token])->all();
-        if (count($invitations) == 0) {
+        $invitation = Invitation::find()->where(['invitation_token' => $token])->one();
+
+        if (!$invitation) {
             Yii::$app->session->addFlash('error', Module::t('Invitation not accepted.'));
             return $this->redirect(['/']);
         }
-        foreach ($invitations as $invitation) {
-            if ($invitation && $invitation->date_expire > date('Y-m-d H:i:s') && $invitation->email == Yii::$app->user->identity->email) {
+        $invitationRoles = InvitationRole::find()->where(['id_invitation' => $invitation->id_invitation])->all();
+        foreach ($invitationRoles as $invitationRole) {
+            if ($invitationRole && $invitationRole->invitation->date_expire > date('Y-m-d H:i:s') && $invitationRole->email == Yii::$app->user->identity->email) {
                 $workspaceUser = WorkspaceUser::findOne([
-                    'id_workspace' => $invitation->id_workspace,
+                    'id_workspace' => $invitationRole->id_workspace,
                     'id_user' => Yii::$app->user->id,
-                    'id_module' => $invitation->module,
-                    'role' => $invitation->role
+                    'id_module' => $invitationRole->module,
+                    'role' => $invitationRole->role
                 ]);
                 if ($workspaceUser) {
                     $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
                     $workspaceUser->save();
                 } else {
-                    if (!Yii::$app->workspace->isAvailableRole($invitation->module, $invitation->role)){
+                    if (!Yii::$app->workspace->isAvailableRole($invitationRole->module, $invitationRole->role)) {
                         $hasError = true;
                         continue;
                     }
 
                     $workspaceUser = new WorkspaceUser();
-                    $workspaceUser->id_workspace = $invitation->id_workspace;
+                    $workspaceUser->id_workspace = $invitationRole->id_workspace;
                     $workspaceUser->id_user = Yii::$app->user->id;
-                    $workspaceUser->role = $invitation->role;
-                    $workspaceUser->id_module = $invitation->module;
+                    $workspaceUser->role = $invitationRole->role;
+                    $workspaceUser->id_module = $invitationRole->module;
                     $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
                     $workspaceUser->save();
-                    $invitation->accept();
+                    $invitationRole->accept();
                 }
             } else {
                 $hasError = true;
@@ -276,17 +296,20 @@ class InvitationController extends WebController
     public function actionDetail($id)
     {
         $model = Invitation::findOne($id);
-        if (!\Yii::$app->user->can('workspaceWebDefaultView', ['id_module' => 'workspace', 'model' => $this->findWorkspace($id)])) {
+        if (!\Yii::$app->user->can('workspaceWebDefaultView', ['id_module' => 'workspace', 'model' => $this->findWorkspace($model->id_workspace)])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
-        $searchModel = new InvitationSearch();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-        $dataProvider->query->andWhere(['invitation_token' => $model->invitation_token]);
+        // $searchModel = new InvitationSearch();
+        // $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        // $dataProvider->query->andWhere(['invitation_token' => $model->invitation_token]);
+        $dataProvider = new \yii\data\ActiveDataProvider([
+            'query' => InvitationRole::find()->where(['id_invitation' => $model->id_invitation]),
+        ]);
+
         return $this->render('detail', [
             'model' => $model,
-            'dataProvider' => $dataProvider,
-            'searchModel' => $searchModel
+            'dataProvider' => $dataProvider
         ]);
     }
 
@@ -298,37 +321,51 @@ class InvitationController extends WebController
      */
     public function actionUpdate($id)
     {
-        $model = Invitation::findOne($id);
-        if (!\Yii::$app->user->can('workspaceWebDefaultCreateInvitation', ['id_module' => 'workspace', 'model' => $this->findWorkspace($model->id_workspace)])) {
+        $modelInvitation = Invitation::findOne($id);
+        if (!\Yii::$app->user->can('workspaceWebDefaultCreateInvitation', ['id_module' => 'workspace', 'model' => $this->findWorkspace($modelInvitation->id_workspace)])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
-        
-        if ($model) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                Yii::$app->session->addFlash('success', Module::t('Invitation updated successfully.'));
-                return $this->redirect(['index', 'id' => $model->id_workspace]);
+        $model = new InvitationForm();
+        if ($modelInvitation) {
+            if ($model->load($this->request->post())) {
+                // Yii::$app->session->addFlash('success', Module::t('Invitation updated successfully.'));
+                // return $this->redirect(['index', 'id' => $model->id_workspace]);
+                if (empty($model->emails)) {
+                    $modelInvitation->date_expire = $model->date_expire;
+                    if ($modelInvitation->save()) {
+                        Yii::$app->session->addFlash('success', Module::t('Invitation updated successfully.'));
+                        return $this->redirect(['index', 'id' => $modelInvitation->id_workspace]);
+                    }
+                } else {
+                    $this->createInvitation($model, $modelInvitation);
+                    $modelInvitation->date_expire = $model->date_expire;
+                    if ($modelInvitation->save()) {
+                        Yii::$app->session->addFlash('success', Module::t('Invitation updated successfully.'));
+                        return $this->redirect(['index', 'id' => $modelInvitation->id_workspace]);
+                    }
+                }
             }
-        } else {
-            Yii::$app->session->addFlash('error', Module::t('Invitation not updated.'));
+
+            $dynamicModuleModel = new DynamicModel();
+            $availableRoles = Yii::$app->setting->getValue('workspace::available_roles');
+            foreach ($availableRoles as $key => $value) {
+                $dynamicModuleModel->defineAttribute($key);
+                $dynamicModuleModel->addRule($key, 'in', ['range' => $value]);
+            }
+            $model->date_expire = $modelInvitation->date_expire;
+            $users = User::find()->all();
+            $usersEmail = [];
+            foreach ($users as $key => $value) {
+                $usersEmail[$value->email] = $value->username;
+            }
+            return $this->render('update', [
+                'model' => $model,
+                'dynamicModuleModel' => $dynamicModuleModel,
+                'availableRoles' => $availableRoles,
+                'modelInvitation' => $modelInvitation,
+                'usersEmail' => $usersEmail
+            ]);
         }
-        $dynamicModuleModel = new DynamicModel();
-        $availableRoles = Yii::$app->setting->getValue('workspace::available_roles');
-        // $availableRoles = $availableRoles[$model->module];
-        $newAvailableRoles[$model->module] = $availableRoles[$model->module];
-        foreach ($newAvailableRoles as $key => $value) {
-            $dynamicModuleModel->defineAttribute($key);
-            // add rule for dynamic attributes
-            $dynamicModuleModel->addRule($key, 'in', ['range' => $value]);
-            $dynamicModuleModel->$key = $model->role;
-        }
-
-
-
-        return $this->render('update', [
-            'model' => $model,
-            'dynamicModuleModel' => $dynamicModuleModel,
-            'availableRoles' => $availableRoles,
-        ]);
     }
 
     /**

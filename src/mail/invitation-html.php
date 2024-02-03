@@ -6,7 +6,7 @@ use yii\helpers\Html;
 /** @var portalium\workspace\models\Invitation $invitation */
 /** @var portalium\workspace\models\Workspace $workspace */
 
-$verifyLink = Yii::$app->urlManager->createAbsoluteUrl(['workspace/invitation/accept', 'token' => $invitation->invitation_token]);
+$verifyLink = Yii::$app->urlManager->createAbsoluteUrl(['workspace/invitation/accept', 'token' => $invitation->invitation->invitation_token]);
 ?>
 <div class="invitation-html">
     <p>Hello <?= Html::encode($invitation->email) ?>,</p>

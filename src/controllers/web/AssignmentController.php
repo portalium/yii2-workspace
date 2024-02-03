@@ -263,7 +263,6 @@ class AssignmentController extends WebController
 
         $workspaceUserModel = WorkspaceUser::findOne(['id_workspace_user' => $id, 'id_user' => Yii::$app->user->id]);
         if ($id == 0 || !$workspaceUserModel) {
-
             Yii::$app->session->addFlash('error', Module::t('You are not allowed to set this workspace.'));
             if (Yii::$app->request->referrer)
                 return $this->redirect(Yii::$app->request->referrer);
@@ -274,11 +273,14 @@ class AssignmentController extends WebController
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
-        $workspaceUser = WorkspaceUser::findOne(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE]);
-        if ($workspaceUser) {
-
-            $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
-            $workspaceUser->save();
+        $workspaceUsers = WorkspaceUser::find(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->groupBy('id_workspace_user')->all();
+        if ($workspaceUsers) {
+            // $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
+            // $workspaceUser->save();
+            foreach ($workspaceUsers as $workspaceUser) {
+                $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
+                $workspaceUser->save();
+            }
         }
         $workspaceUser = WorkspaceUser::findOne(['id_workspace_user' => $id]);
         if ($workspaceUser) {

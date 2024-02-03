@@ -124,8 +124,6 @@ $this->registerCss(
             'filterModel' => $invitationSearchModel,
             'columns' => [
                 ['class' => 'yii\grid\SerialColumn'],
-                'email',
-                /* 'invitation_token', */
                 [
                     'attribute' => 'invitation_token',
                     'label' => Module::t('Invitation Url'),
@@ -138,43 +136,28 @@ $this->registerCss(
                         );
                     }
                 ],
-                [
-                    'attribute' => 'status',
-                    'label' => Module::t('Status'),
-                    'format' => 'raw',
-                    'value' => function ($model) {
-                        return Invitation::getStatusList()[$model->status];
-                    },
-                    'filter' => Invitation::getStatusList()
-                ],
                 'date_expire',
                 [
                     'class' => ActionColumn::className(),
                     'urlCreator' => function ($action, Invitation $model, $key, $index, $column) {
                         return Url::toRoute([$action, 'id' => $model->id_invitation]);
                     },
-                    'template' => '{delete} {resend} {detail}',
+                    'template' => '{detail} {update}',
                     'buttons' => [
-                        'resend' => function ($url, $model, $key) {
-                            return Html::a(
-                                Html::tag('i', '', ['class' => 'fa fa-envelope']),
-                                ['resend', 'id' => $model->id_invitation],
-                                ['class' => 'btn btn-primary btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;', 'data-confirm' => Module::t('Are you sure resend this invitation?')]
-                            );
-                        },
-                        'delete' => function ($url, $model, $key) {
-                            return Html::button(
-                                Html::tag('i', '', ['class' => 'fa fa-trash']),
-                                ['class' => 'btn btn-danger btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;', 'onclick' => 'deleteInvitation(' . $model->id_invitation . ')']
-                            );
-                        },
                         'detail' => function ($url, $model, $key) {
                             return Html::a(
                                 Html::tag('i', '', ['class' => 'fa fa-eye']),
                                 ['detail', 'id' => $model->id_invitation],
                                 ['class' => 'btn btn-primary btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
                             );
-                        }
+                        },
+                        'update' => function ($url, $model, $key) {
+                            return Html::a(
+                                Html::tag('i', '', ['class' => 'fa fa-pencil']),
+                                ['update', 'id' => $model->id_invitation],
+                                ['class' => 'btn btn-primary btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
+                            );
+                        },
                     ],
                 ],
             ],
