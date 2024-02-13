@@ -42,7 +42,7 @@ $this->registerCss(
     <div class="row">
         <div class="col-md-5">
 
-            <?php Panel::begin(['title' => Html::encode('Users'), 'options' => ['id' => 'users-panel']]) ?>
+            <?php Panel::begin(['title' => Html::encode(Module::t('Users')), 'options' => ['id' => 'users-panel']]) ?>
             <?php
             echo Select2::widget([
                 'name' => 'users-select-list',
@@ -57,7 +57,7 @@ $this->registerCss(
                     'selectOptions' => ['class' => 'text-success'],
                     'unselectOptions' => ['class' => 'text-danger'],
                 ],
-                'options' => ['placeholder' => 'Select or add a user ...', 'multiple' => true, 'style' => 'width:100%'],
+                'options' => ['placeholder' => Module::t('Select and add a user ...'), 'multiple' => true, 'style' => 'width:100%'],
                 'pluginOptions' => [
                     'tags' => true,
                 ],
@@ -65,28 +65,28 @@ $this->registerCss(
             ?>
 
 
-                    <fieldset style="border-width: 1px; border-style: groove; border-color: #ccc; border-image: initial;    padding-left: 10px;
+            <fieldset style="border-width: 1px; border-style: groove; border-color: #dee2e6; border-image: initial;    padding-left: 10px;
                 padding-right: 10px;
                 margin-bottom: 1rem;">
-                        <legend>Roles</legend>
-                        <?php
-                        foreach ($dynamicModuleModel as $key => $value) {
-                            $availableRole = [];
-                            if (!isset($availableRoles[$key]))
-                                continue;
-                            foreach ($availableRoles[$key] as $role) {
-                                $availableRole[$role] = $role;
-                            }
-                            echo Html::beginTag('div', ['class' => 'mb-3 row field-dynamicmodel-' . $key, 'style' => 'padding-top: 10px;']);
-                            echo Html::label($dynamicModuleModel['_labels'][$key], $key . '-dd-list', ['class' => 'col-sm-2 col-form-label']);
-                            echo Html::beginTag('div', ['class' => 'col-sm-10']);
-                            echo Html::dropDownList($key, null, $availableRole, ['id' => $key . '-dd-list', 'prompt' => 'Select Role', 'name' => 'module-list', 'data-key' => $key, 'class' => 'form-control form-select module-list', 'style' => 'margin-bottom: 5px;']);
-                            echo Html::endTag('div');
-                            echo Html::endTag('div');
-                        }
-                        ?>
+                <legend><?= Module::t('Roles') ?></legend>
+                <?php
+                foreach ($dynamicModuleModel as $key => $value) {
+                    $availableRole = [];
+                    if (!isset($availableRoles[$key]))
+                        continue;
+                    foreach ($availableRoles[$key] as $role) {
+                        $availableRole[$role] = $role;
+                    }
+                    echo Html::beginTag('div', ['class' => 'mb-3 row field-dynamicmodel-' . $key, 'style' => 'padding-top: 10px;']);
+                    echo Html::label($dynamicModuleModel['_labels'][$key], $key . '-dd-list', ['class' => 'col-sm-2 col-form-label']);
+                    echo Html::beginTag('div', ['class' => 'col-sm-10']);
+                    echo Html::dropDownList($key, null, $availableRole, ['id' => $key . '-dd-list', 'prompt' => Module::t('Select Role'), 'name' => 'module-list', 'data-key' => $key, 'class' => 'form-control form-select module-list', 'style' => 'margin-bottom: 5px;']);
+                    echo Html::endTag('div');
+                    echo Html::endTag('div');
+                }
+                ?>
 
-                    </fieldset>
+            </fieldset>
             <?php
             Pjax::begin(['id' => 'users']);
 
@@ -104,11 +104,11 @@ $this->registerCss(
         <div class="col-md-5">
             <?php Modal::begin([
                 'id' => 'roleModalUpdate',
-                'title' => 'Roles',
-                'footer' => Html::button('Close', ['class' => 'btn btn-assignment', 'data-bs-dismiss' => 'modal']) . Html::button('Select', ['class' => 'btn btn-primary', 'id' => 'role-select-update']),
+                'title' => Module::t('Roles'),
+                'footer' => Html::button(Module::t('Close'), ['class' => 'btn btn-assignment', 'data-bs-dismiss' => 'modal']) . Html::button(Module::t('Select'), ['class' => 'btn btn-primary', 'id' => 'role-select-update']),
             ]) ?>
             <div class="mb-3 row">
-                <label class="col-sm-2 col-form-label" for="role-list-update">Roles</label>
+                <label class="col-sm-2 col-form-label" for="role-list-update"><?= Module::t('Roles')?></label>
                 <div class="col-sm-10">
                     <?= Html::dropDownList('id_module_update', null, $moduleArray, ['id' => 'module-list-update', 'prompt' => 'Select Module', 'class' => 'form-control', 'style' => 'margin-bottom: 5px;']) ?>
                     <?php
@@ -129,12 +129,12 @@ $this->registerCss(
             </div>
             <?php Modal::end() ?>
             <?php Panel::begin([
-                'title' => Html::encode('Assigned Users'),
+                'title' => Html::encode(Module::t('Assigned Users')),
                 'actions' => [
                     Html::button(Html::tag('i', '', ['class' => 'fa fa-pencil']), ['class' => 'btn btn-primary btn-sm', 'id' => 'editButton', 'style' => 'margin-top: -4px; margin-bottom: -5px;', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#roleModalUpdate',]),
                 ],
             ]) ?>
-            <?= Html::textInput('assigned-users-search', '', ['class' => 'form-control', 'id' => 'assigned-users-search', 'placeholder' => 'Search assigned users', 'style' => 'margin-bottom: 5px;']) ?>
+            <?= Html::textInput('assigned-users-search', '', ['class' => 'form-control', 'id' => 'assigned-users-search', 'placeholder' => Module::t('Search assigned users'), 'style' => 'margin-bottom: 5px;']) ?>
             <?php
             Pjax::begin(['id' => 'assigned']);
             echo Html::dropDownList(

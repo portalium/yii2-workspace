@@ -92,7 +92,7 @@ class InvitationController extends WebController
     /**
      * Creates a new Invitation model.
      * If creation is successful, the browser will be redirected to the 'index' page.
-     * @param int $id_workspace Id Workspace
+     * @param int $id Id Workspace
      * @return string|\yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
      */
@@ -129,8 +129,9 @@ class InvitationController extends WebController
     /**
      * Creates a new Invitation model.
      * If creation is successful, the browser will be redirected to the 'index' page.
-     * @param int $id_workspace Id Workspace
-     * @return string|\yii\web\Response
+     * @param \portalium\workspace\models\InvitationForm $model
+     * @param \portalium\workspace\models\Invitation $invitationModel
+     * @return void
      * @throws NotFoundHttpException if the model cannot be found
      */
     private function createInvitation($model, $invitationModel)
@@ -160,7 +161,7 @@ class InvitationController extends WebController
 
     /**
      * Resend a single Invitation model.
-     * @param int $id_invitation Id Invitation
+     * @param int $id Id Invitation
      * @return string|\yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
      */
@@ -182,7 +183,8 @@ class InvitationController extends WebController
     /**
      * Deletes an existing Invitation model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param int $id_invitation Id Invitation
+     * @param int $id Id Invitation
+     * @param bool $all Delete all invitations with the same token
      * @return \yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
      */

@@ -73,6 +73,14 @@ class Workspace extends Component
         if ($workspace) {
             return $workspace->id_workspace;
         }
+        $workspace = WorkspaceUser::find()
+            ->where(['id_user' => Yii::$app->user->id])
+            ->one();
+        if ($workspace) {
+            $workspace->status = WorkspaceUser::STATUS_ACTIVE;
+            if ($workspace->save())
+            return $workspace->id_workspace;
+        }
         return null;
     }
 

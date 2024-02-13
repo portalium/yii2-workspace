@@ -40,6 +40,11 @@ class Module extends \portalium\base\Module
                 ],
                 [
                     'menu' => 'web',
+                    'type' => 'action',
+                    'route' => '/workspace/default/manage',
+                ],
+                [
+                    'menu' => 'web',
                     'type' => 'widget',
                     'label' => 'portalium\workspace\widgets\Workspace',
                     'name' => 'Workspace',
