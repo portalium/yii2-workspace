@@ -18,11 +18,12 @@ $this->title = Module::t('Workspaces');
 $this->params['breadcrumbs'][] = $this->title;
 
 ?>
+
 <div class="workspace-index">
 
-    <?php 
-        $actions[] = Html::a(Module::t(''), ['create'], ['class' => 'btn btn-success fa fa-plus', 'id' => 'create-workspace']);
-        Panel::begin(['title' => Module::t('Workspace'), 'icon' => 'icon-plus font-blue-hoki', 'actions' => $actions]); 
+    <?php
+    $actions[] = Html::a(Module::t(''), ['create'], ['class' => 'btn btn-success fa fa-plus', 'id' => 'create-workspace']);
+    Panel::begin(['title' => Module::t('Workspace'), 'icon' => 'icon-plus font-blue-hoki', 'actions' => $actions]);
     ?>
 
     <?= GridView::widget([
@@ -31,18 +32,26 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
             'name',
+            'user.username',
             [
                 'class' => ActionColumn::className(),
                 'urlCreator' => function ($action, Workspace $model, $key, $index, $column) {
                     return Url::toRoute([$action, 'id' => $model->id_workspace]);
                 },
-                'template' => '{view} {update} {delete} {assign}',
+                'template' => '{view} {update} {delete} {assign} {invitation}',
                 'buttons' => [
                     'assign' => function ($url, $model) {
                         return Html::a(
-                            Html::tag('i', '', ['class' => 'fa fa-thin fa-user']), 
-                            ['assignment', 'id' => $model->id_workspace], 
-                            ['title' => Module::t('Assign'), 'class' => 'btn btn-warning btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;'] 
+                            Html::tag('i', '', ['class' => 'fa fa-thin fa-user']),
+                            ['/workspace/assignment/assignment', 'id' => $model->id_workspace],
+                            ['title' => Module::t('Assign'), 'class' => 'btn btn-warning btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
+                        );
+                    },
+                    'invitation' => function ($url, $model) {
+                        return Html::a(
+                            Html::tag('i', '', ['class' => 'fa fa-thin fa-envelope']),
+                            ['/workspace/invitation/index', 'id' => $model->id_workspace],
+                            ['title' => Module::t('Invitation'), 'class' => 'btn btn-info btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
                         );
                     },
                 ],

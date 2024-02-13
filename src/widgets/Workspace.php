@@ -19,7 +19,7 @@ class Workspace extends Widget
 
     public function init()
     {
-        if(!$this->icon){
+        if (!$this->icon) {
             $this->icon = Html::tag('i', '', ['class' => '', 'style' => 'margin-right: 5px;']);
         }
         parent::init();
@@ -28,28 +28,29 @@ class Workspace extends Widget
     public function run()
     {
         $query = WorkspaceUser::find();
-        if(!Yii::$app->user->can('admin')){
-            $query->where(['id_user' => Yii::$app->user->id]);
-        }
+        // if(!Yii::$app->user->can('workspaceWorkspaceFullAccess')){
+        $query->where(['id_user' => Yii::$app->user->id]);
+        // }
         $workspaces = $query->all();
         $orgItems = [];
 
-        foreach ($workspaces as $key => $value){
+        $activeWorkspace = WorkspaceUser::find()->where(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->one();
+        foreach ($workspaces as $key => $value) {
             $orgItems[] = [
-                'label' => Module::t($value->workspace->name),
-                'url' => ['/workspace/default/set-workspace','id' => $value->id_workspace_user]
+                'label' => Module::t($value->workspace->name) . (isset($value->workspace->user->username) ? (' (' . $value->workspace->user->username . ')') : ''),
+                'url' => ['/workspace/assignment/set-workspace', 'id' => $value->id_workspace_user],
+                'active' => $activeWorkspace && $activeWorkspace->id_workspace == $value->id_workspace ? true : false,
             ];
         }
 
-        $activeWorkspace = WorkspaceUser::find()->where(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->one();
         //orgItems unique
-        if($activeWorkspace){
+        if ($activeWorkspace) {
             $menuItems[] = [
                 'label' => $this->generateLabel("Workspace"),
-                'url' => ['/workspace/default/set-workspace','id' => $activeWorkspace->id_workspace],
+                'url' => ['/workspace/assignment/set-workspace', 'id' => $activeWorkspace->id_workspace],
                 'items' => $orgItems,
             ];
-        }else{
+        } else {
             $menuItems[] = [
                 'label' => $this->generateLabel("Workspace"),
                 'url' => ['#'],
@@ -66,7 +67,7 @@ class Workspace extends Widget
     private function generateLabel($text)
     {
         $label = "";
-        if(isset($this->display)){
+        if (isset($this->display)) {
             switch ($this->display) {
                 case MenuItem::TYPE_DISPLAY['icon']:
                     $label = $this->icon;
@@ -81,7 +82,7 @@ class Workspace extends Widget
                     $label = $this->icon . Module::t($text);
                     break;
             }
-        }else{
+        } else {
             $label = $this->icon . Module::t($text);
         }
 

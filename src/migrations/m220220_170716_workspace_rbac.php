@@ -14,6 +14,7 @@ class m220220_170716_workspace_rbac extends Migration
 
         $permissions = [
             'workspaceWebDefaultIndex' => 'View workspace page',
+            'workspaceWebDefaultManage' => 'Manage workspace',
             'workspaceWebDefaultView' => 'View workspace information',
             'workspaceWebDefaultCreate' => 'Create workspace',
             'workspaceWebDefaultUpdate' => 'Update workspace information',
@@ -25,6 +26,9 @@ class m220220_170716_workspace_rbac extends Migration
             'workspaceWebDefaultSetWorkspace' => 'Workspace settings',
             'workspaceWorkspaceFindAll' => 'Find all workspaces',
             'workspaceWorkspaceFullAccess' => 'Full access to workspaces',
+            'workspaceWebDefaultCreateInvitation' => 'Create invitation',
+            'workspaceWebDefaultResendInvitation' => 'Resend invitation',
+            'workspaceWebDefaultDeleteInvitation' => 'Delete invitation'
         ];
         
         
