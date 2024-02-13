@@ -35,7 +35,7 @@ class m180323_184342_workspace_invitations extends Migration
 
         $this->createIndex(
             'id_user',
-            Module::$tablePrefix . 'invitation',
+            Module::$tablePrefix . 'invitation_id_user',
             'id_user'
         );
 
