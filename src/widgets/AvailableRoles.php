@@ -23,6 +23,7 @@ class AvailableRoles extends InputWidget
             echo Html::$input($this->model, $this->attribute, $this->options);
         }
         $supportWorkspaceModules = Yii::$app->workspace->getSupportModules();
+        
         $checkListGroup = [];
         foreach ($supportWorkspaceModules as $key => $value) {
             $checkList = [];
