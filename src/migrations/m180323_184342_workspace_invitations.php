@@ -19,7 +19,7 @@ class m180323_184342_workspace_invitations extends Migration
         ]);
 
         $this->createIndex(
-            '{{%idx-' . Module::$tablePrefix . 'invitation-id_invitation}}',
+            '{{%idx-' . Module::$tablePrefix . 'invitation-id_invitation_workspace}}',
             Module::$tablePrefix . 'invitation',
             'id_workspace'
         );
@@ -34,7 +34,7 @@ class m180323_184342_workspace_invitations extends Migration
         );
 
         $this->createIndex(
-            '{{%idx-' . Module::$tablePrefix . 'invitation-id_user}}',
+            '{{%idx-' . Module::$tablePrefix . 'invitation-id_user_workspace}}',
             Module::$tablePrefix . 'invitation',
             'id_user'
         );

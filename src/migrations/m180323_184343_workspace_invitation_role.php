@@ -20,7 +20,7 @@ class m180323_184343_workspace_invitation_role extends Migration
         ]);
 
         $this->createIndex(
-            'id_workspace',
+            '{{%idx-' . Module::$tablePrefix . 'invitation-id_workspace_workspace}}',
             Module::$tablePrefix . 'invitation_role',
             'id_workspace'
         );
@@ -35,7 +35,7 @@ class m180323_184343_workspace_invitation_role extends Migration
         );
 
         $this->createIndex(
-            'id_invitation',
+            '{{%idx-' . Module::$tablePrefix . 'invitation-id_invitation_workspace}}',
             Module::$tablePrefix . 'invitation_role',
             'id_invitation'
         );
