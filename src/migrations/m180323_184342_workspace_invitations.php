@@ -18,11 +18,11 @@ class m180323_184342_workspace_invitations extends Migration
             'date_expire' => $this->dateTime()->notNull()->defaultExpression("CURRENT_TIMESTAMP")
         ]);
 
-        $this->createIndex(
+        /* $this->createIndex(
             '{{%idx-' . Module::$tablePrefix . 'invitation-id_invitation_workspace}}',
             Module::$tablePrefix . 'invitation',
             'id_workspace'
-        );
+        ); */
 
         $this->addForeignKey(
             'fk_id_workspace_invitation',
@@ -33,11 +33,11 @@ class m180323_184342_workspace_invitations extends Migration
             'CASCADE'
         );
 
-        $this->createIndex(
+        /* $this->createIndex(
             '{{%idx-' . Module::$tablePrefix . 'invitation-id_user_workspace}}',
             Module::$tablePrefix . 'invitation',
             'id_user'
-        );
+        ); */
 
         $this->addForeignKey(
             'fk_id_user_invitation',

@@ -19,11 +19,11 @@ class m180323_184343_workspace_invitation_role extends Migration
             'status' => $this->smallInteger(1)->notNull()->defaultValue(0), // 0: pending, 1: accepted
         ]);
 
-        $this->createIndex(
+        /* $this->createIndex(
             '{{%idx-' . Module::$tablePrefix . 'invitation-id_workspace_workspace}}',
             Module::$tablePrefix . 'invitation_role',
             'id_workspace'
-        );
+        ); */
 
         $this->addForeignKey(
             'fk_id_workspace_invitation_role_invitation',
@@ -34,11 +34,11 @@ class m180323_184343_workspace_invitation_role extends Migration
             'CASCADE'
         );
 
-        $this->createIndex(
+        /*  $this->createIndex(
             '{{%idx-' . Module::$tablePrefix . 'invitation-id_invitation_workspace}}',
             Module::$tablePrefix . 'invitation_role',
             'id_invitation'
-        );
+        ); */
 
         $this->addForeignKey(
             'fk_id_invitation_invitation_role_invitation',
