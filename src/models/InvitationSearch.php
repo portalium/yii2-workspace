@@ -2,7 +2,7 @@
 
 namespace portalium\workspace\models;
 
-use yii\data\ActiveDataProvider;
+use portalium\data\ActiveDataProvider;
 use portalium\workspace\models\Invitation;
 /**
  * This is the model class for table "workspace_invitation".
