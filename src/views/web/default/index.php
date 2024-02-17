@@ -23,7 +23,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?php
     $actions[] = Html::a(Module::t(''), ['create'], ['class' => 'btn btn-success fa fa-plus', 'id' => 'create-workspace']);
-    Panel::begin(['title' => Module::t('Workspace'), 'icon' => 'icon-plus font-blue-hoki', 'actions' => $actions]);
+    Panel::begin(['title' => Module::t('Workspace'), 'actions' => $actions]);
     ?>
 
     <?= GridView::widget([
@@ -57,6 +57,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 ],
             ],
         ],
+        'layout' => '{items}{summary}{pagesizer}{pager}',
     ]); ?>
 
     <?php Panel::end(); ?>

@@ -161,6 +161,7 @@ $this->registerCss(
                     ],
                 ],
             ],
+            'layout' => '{items}{summary}{pagesizer}{pager}',
         ]); ?>
         
         <?php

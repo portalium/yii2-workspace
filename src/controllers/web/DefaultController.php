@@ -45,7 +45,7 @@ class DefaultController extends WebController
         $dataProvider = $searchModel->search($this->request->queryParams);
 
         $dataProvider->query->andWhere([Module::$tablePrefix . 'workspace.id_user' => Yii::$app->user->id]);
-
+        $dataProvider->pagination->pageSize = 12;
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,

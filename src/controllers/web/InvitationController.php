@@ -52,7 +52,7 @@ class InvitationController extends WebController
         $invitationModel->id_workspace = $id;
         $invitationSearchModel = new \portalium\workspace\models\InvitationSearch();
         // $invitationDataProvider = Invitation::find()->where(['id_workspace' => $id])->groupBy(['invitation_token']);
-        // $invitationDataProvider = new \yii\data\ActiveDataProvider([
+        // $invitationDataProvider = new \portalium\data\ActiveDataProvider([
         //     'query' => $invitationDataProvider,
         // ]);
         $invitationDataProvider = $invitationSearchModel->search(Yii::$app->request->queryParams);
@@ -305,7 +305,7 @@ class InvitationController extends WebController
         // $searchModel = new InvitationSearch();
         // $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
         // $dataProvider->query->andWhere(['invitation_token' => $model->invitation_token]);
-        $dataProvider = new \yii\data\ActiveDataProvider([
+        $dataProvider = new \portalium\data\ActiveDataProvider([
             'query' => InvitationRole::find()->where(['id_invitation' => $model->id_invitation]),
         ]);
 
