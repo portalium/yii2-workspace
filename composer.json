@@ -21,7 +21,8 @@
 	"minimum-stability": "dev",
 	"require": {
 		"portalium/yii2-site": "*",
-		"portalium/yii2-user": "*"
+		"portalium/yii2-user": "*",
+		"kartik-v/yii2-widget-select2": "@dev"
     },
 	"autoload" : {
 		"psr-4" : {
