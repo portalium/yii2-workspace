@@ -1,15 +1,8 @@
 $(document).ready(function () {
     // Handles the click event for the role-select element
     $('#role-select').on('click', async function (e) {
-        // $('#users-panel').hide();
-        // $('#spinner-div-page').show();
-        // var selectedValues = $('select[data-target="available"]').val();
-        // var selectedRole = $('#available-roles').val();
-        // var id_module = $('#module-list').val();
         var selectedUsers = $('#users-select-list').val();
-        console.log(selectedUsers);
-        console.log($('#users-select-list'));
-        // get name is module-list
+
         let modules = $('.module-list');
 
         let moduleRoles = {};
@@ -18,21 +11,14 @@ $(document).ready(function () {
             let dataKey = attr.value;
             moduleRoles[dataKey] = element.value;
         });
-        console.log(moduleRoles);
         let selectedValues = [];
         selectedUsers.forEach(function (element) {
             selectedValues.push(element);
         }
         );
 
-        /* 
-                assignAction(selectedValues, selectedRole, id_workspace, '#roleModal', id_module, 'create');
-                $.pjax.reload({
-                    container: '#pjax-flash-message',
-                    async: false
-                }).done(function() {
-                }); */
-        // height: 14px;
+        
+        
         let iTag = $('.fa-arrow-right');
         iTag.removeClass('fa fa-arrow-right');
         iTag.addClass('spinner-border spinner-border-sm');
