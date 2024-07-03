@@ -50,7 +50,7 @@ echo $form->field($model, 'emails')->widget(Select2::className(), [
     ],
 ]);
 
-/*echo $form->field($model, 'date_expire')->widget(DatePicker::classname(), [
+echo $form->field($model, 'date_expire')->widget(DatePicker::classname(), [
     'dateFormat' => 'yyyy-MM-dd',
     'options' => ['class' => 'form-control', 'autocomplete' => 'off'],
     'clientOptions' => [
@@ -58,7 +58,7 @@ echo $form->field($model, 'emails')->widget(Select2::className(), [
         'changeYear' => true,
         'yearRange' => Date('Y') . ':' . (Date('Y') + 10),
     ],
-]);*/
+]);
 
 ?>
 

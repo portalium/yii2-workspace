@@ -43,6 +43,14 @@ class m010101_010102_workspace_menu extends Migration
             'id_child' => MenuItem::find()->where(['slug' => 'workspace-workspaces'])->one()->id_item,
         ]);
 
+        $id_menu_side = Menu::find()->where(['slug' => 'web-side-menu'])->one()->id_menu;
+
+        if ($id_menu_side) {
+            $this->batchInsert('menu_item', ['id_item', 'label', 'slug', 'type', 'style', 'data', 'sort', 'id_menu', 'name_auth', 'id_user', 'date_create', 'date_update'], [
+                [NULL, 'Workspaces', 'workspaces', '2', '{"icon":"fa-building","color":"","iconSize":"","display":"3","childDisplay":"","placement":"1"}', '{"data":{"module":"workspace","routeType":"action","route":"\\/workspace\\/default\\/index","model":"","menuRoute":null,"menuType":null}}', 2, $id_menu_side, 'user', 1, '2023-07-17 20:15:56', '2024-02-08 11:14:43'],
+            ]);
+        }
+
     }
 
     public function down()
