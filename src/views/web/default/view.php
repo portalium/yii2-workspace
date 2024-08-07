@@ -8,7 +8,7 @@ use portalium\theme\widgets\Panel;
 /** @var yii\web\View $this */
 /** @var portalium\workspace\models\Workspace $model */
 
-$this->title = $model->name;
+$this->title = $model->title;
 $this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
@@ -38,7 +38,7 @@ $this->params['breadcrumbs'][] = $this->title;
         <?= DetailView::widget([
             'model' => $model,
             'attributes' => [
-                'name',
+                'title',
             ],
         ]) ?>
         <?php
