@@ -11,6 +11,7 @@ class m180323_174342_workspace extends Migration
         $this->createTable(Module::$tablePrefix . 'workspace', [
             'id_workspace' => $this->primaryKey(11)->notNull(),
             'name' => $this->string(255)->notNull(),
+            'title' => $this->string(255)->notNull(),
             'id_user' => $this->integer(11)->notNull(),
             'date_create' => $this->dateTime()->notNull()->defaultExpression("CURRENT_TIMESTAMP"),
             'date_update' => $this->dateTime()->notNull()->defaultExpression("CURRENT_TIMESTAMP")

@@ -249,3 +249,13 @@ $this->registerJs(
 JS
 );
 ?>
+
+<?php
+$this->registerJs('
+    $(document).ajaxSend(function(event, jqxhr, settings) {
+        if (settings.type == "POST") {
+            settings.data = settings.data + "&' . Yii::$app->request->csrfParam . '=' . Yii::$app->request->csrfToken . '";
+        }
+    });
+');
+?>
