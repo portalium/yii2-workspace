@@ -51,6 +51,7 @@ return [
     'Create Workspace' => 'Çalışma Alanı Oluştur',
     'Assignable roles' => 'Atanabilir roller',
     'Name' => 'Ad',
+    'Title' => 'Başlık',
     'Assigned Users' => 'Atanmış Kullanıcılar',
     'Users' => 'Kullanıcılar',
     'Search assigned users' => 'Atanmış kullanıcıları ara',

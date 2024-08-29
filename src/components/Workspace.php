@@ -10,7 +10,6 @@ use portalium\workspace\Module;
 
 class Workspace extends Component
 {
-    
     public function checkOwner($id_workspace)
     {
         $activeWorkspaceId = Yii::$app->workspace->id;
@@ -39,8 +38,6 @@ class Workspace extends Component
             $availableRoles = [];
         }
         $roles = [];
-        //add select
-        // $roles[] = ['name' => Module::t('Select'), 'value' => ''];
         foreach (Yii::$app->authManager->getRoles() as $role) {
             if (in_array($role->name, $availableRoles)) {
                 $roles[] = $role;
@@ -49,13 +46,12 @@ class Workspace extends Component
         return $roles;
     }
 
-    public function getSupportModules(){
+    public function getSupportModules()
+    {
         $allModulesId = Yii::$app->getModules();
         $supportWorkspaceModules = [];
-        
+
         foreach ($allModulesId as $key => $value) {
-           
-            
             if (isset(Yii::$app->getModule($key)->className()::$supportWorkspace) && Yii::$app->getModule($key)->className()::$supportWorkspace) {
                 $supportWorkspaceModules[$key] = Yii::$app->getModule($key)->className()::$supportWorkspace;
             }
@@ -79,7 +75,7 @@ class Workspace extends Component
         if ($workspace) {
             $workspace->status = WorkspaceUser::STATUS_ACTIVE;
             if ($workspace->save())
-            return $workspace->id_workspace;
+                return $workspace->id_workspace;
         }
         return null;
     }
@@ -87,13 +83,13 @@ class Workspace extends Component
     public function checkSupportRoles()
     {
         $supportWorkspaceModules = $this->getSupportModules();
-        
+
         foreach ($supportWorkspaceModules as $key => $value) {
             try {
                 $role = Yii::$app->setting->getValue($key . '::workspace::admin_role');
                 $defaultRole = Yii::$app->setting->getValue($key . '::workspace::default_role');
                 if (!$role || !$defaultRole) {
-                    
+
                     return false;
                 }
             } catch (\Exception $e) {
@@ -107,9 +103,11 @@ class Workspace extends Component
     {
         $workspaceRoles = WorkspaceUser::find()
             ->where(['id_workspace' => Yii::$app->workspace->id, 'id_user' => Yii::$app->user->id, 'id_module' => $module])->groupBy('role')->all();
+
         if (!$workspaceRoles) {
             return false;
         }
+
         if (isset($params['model']) && $params['model']->id_workspace != Yii::$app->workspace->id) {
             return false;
         }
@@ -120,10 +118,23 @@ class Workspace extends Component
             if (!$role) {
                 continue;
             }
+
             $permissions = $auth->getPermissionsByRole($role->name);
+
+            $workspacePermissions = $workspaceRole->workspace->permissions;
+
+            if (!empty($workspacePermissions)) {
+                foreach ($workspacePermissions as $workspacePermission) {
+                    $permissionModel = $auth->getPermission($workspacePermission);
+                    if ($permissionModel) {
+                        $permissions[$permissionModel->name] = $permissionModel;
+                    }
+                }
+            }
             if (isset($permissions[$permission])) {
                 return true;
             }
+
             $childRoles = $auth->getChildRoles($role->name);
             foreach ($childRoles as $childRole) {
                 $permissions = $auth->getPermissionsByRole($childRole->name);
@@ -132,7 +143,7 @@ class Workspace extends Component
                 }
             }
         }
-        
+
         return false;
     }
 
@@ -149,5 +160,4 @@ class Workspace extends Component
         }
         return false;
     }
-
 }

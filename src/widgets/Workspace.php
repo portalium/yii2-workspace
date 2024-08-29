@@ -16,17 +16,30 @@ class Workspace extends Widget
     public $options;
     public $icon;
     public $display;
+    public $placement;
 
     public function init()
     {
         if (!$this->icon) {
-            $this->icon = Html::tag('i', '', ['class' => '', 'style' => 'margin-right: 5px;']);
+            //$this->icon = Html::tag('i', '', ['class' => 'fa-building', 'style' => 'margin-right: 5px;']);
         }
+     
+        $this->options['class'] = 'placementWidget';
+        if($this->placement == 'top-to-bottom'){
+            $this->options['data-bs-placement'] = $this->placement; 
+            $this->registerCss();
+
+        }if($this->placement == 'side-by-side'){
+            $this->registerCss();
+        }
+
         parent::init();
     }
 
     public function run()
     {
+
+
         $query = WorkspaceUser::find();
         // if(!Yii::$app->user->can('workspaceWorkspaceFullAccess')){
         $query->where(['id_user' => Yii::$app->user->id]);
@@ -49,7 +62,10 @@ class Workspace extends Widget
                 'label' => $this->generateLabel("Workspace"),
                 'url' => ['/workspace/assignment/set-workspace', 'id' => $activeWorkspace->id_workspace],
                 'items' => $orgItems,
+               
+                
             ];
+            $this->registerCss();
         } else {
             $menuItems[] = [
                 'label' => $this->generateLabel("Workspace"),
@@ -57,10 +73,10 @@ class Workspace extends Widget
                 'items' => $orgItems,
             ];
         }
-
         return Nav::widget([
             'options' => $this->options,
             'items' => $menuItems,
+        
         ]);
     }
 
@@ -88,4 +104,19 @@ class Workspace extends Widget
 
         return $label;
     }
+
+    private function registerCss()
+    {
+        $css = <<<CSS
+    .placementWidget[data-bs-placement="side-by-side"] {
+    }
+    .placementWidget[data-bs-placement="top-to-bottom"] li a i {
+     display: block;
+     flex-direction: column; 
+     align-items: center;
+    }
+    CSS;
+        $this->getView()->registerCss($css);
+    }
 }
+

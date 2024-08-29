@@ -26,7 +26,7 @@ use portalium\theme\widgets\ActiveForm;
         ]
     ]
 ]) ?>
-    <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
 
     <?php Panel::end() ?>
     <?php ActiveForm::end(); ?>
