@@ -48,8 +48,10 @@ class AvailableRoles extends InputWidget
         foreach ($checkListGroup as $key => $value) {
             $tabs[] = [
                 'label' => $supportWorkspaceModules[$key],
-                'content' => Html::checkboxList('Setting[workspace-'. $this->settingIndex .'][value]['. $key .'][]', $values[$key] ?? []
-                    , $checkListGroup[$key], ['class' => 'form-control']),
+                'content' => Html::checkboxList('Setting[workspace-'. $this->settingIndex .'][value]['. $key .'][]', 
+                    $values[$key] ?? []
+                    , $checkListGroup[$key], 
+                    ['class' => 'form-control']),
             ];
         }
 
