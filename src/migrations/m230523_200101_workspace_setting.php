@@ -28,9 +28,6 @@ class m230523_200101_workspace_setting extends Migration
             'is_preference' => 0
         ]);
         if ($siteUserRole) {
-            $workspace = new Workspace();
-            $workspace->name = 'SystemWorkspace';
-            $workspace->save();
             $this->insert(WorkspaceModule::$tablePrefix . 'workspace', [
                 'name' => 'SystemWorkspace',
                 'title'=> 'System Workspace',
