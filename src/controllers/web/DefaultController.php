@@ -110,7 +110,6 @@ class DefaultController extends WebController
             if ($model->load($this->request->post())) {
                 $model->id_user = Yii::$app->user->id;
                 if ($model->save())
-                Yii::$app->session->addFlash('success', Module::t('Workspace has been created'));
                     return $this->redirect(['view', 'id' => $model->id_workspace]);
             }
         } else {
@@ -140,7 +139,6 @@ class DefaultController extends WebController
         $model = $this->findModel($id);
 
         if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            Yii::$app->session->addFlash('success', Module::t('Workspace has been updated'));
             return $this->redirect(['view', 'id' => $model->id_workspace]);
         }
 
@@ -161,16 +159,10 @@ class DefaultController extends WebController
         if (!\Yii::$app->user->can('workspaceWebDefaultDelete', ['id_module' => 'workspace', 'model' => $this->findModel($id)])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
-        $model = $this->findModel($id);
-        if ($model->delete()) {
-            Yii::$app->session->setFlash('success', Module::t('Workspace has been deleted.'));
-        } 
-        else {
-            Yii::$app->session->setFlash('error', Module::t('There was an error deleting the workspace.'));
-        }
+        $this->findModel($id)->delete();
 
-            return $this->redirect(['index']);
-        }
+        return $this->redirect(['index']);
+    }
 
     /**
      * Finds the Workspace model based on its primary key value.

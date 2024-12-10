@@ -99,10 +99,12 @@ class TriggerActions extends BaseObject
         ['id' => $id_user] = $event->payload;
         $user = User::findOne($id_user);
         $workspaceModel = new Workspace();
-        $workspaceModel->name = 'Home';
+        $workspaceModel->name = strtolower($user->username) . 'workspace';
         $workspaceModel->title = 'Home';
         $workspaceModel->id_user = $user->id_user;
-        $workspaceModel->save();
+        if(!$workspaceModel->save()){
+            Yii::error($workspaceModel->errors);
+        }
         Event::trigger(Yii::$app->getModules(), Module::EVENT_USER_CREATE_AFTER, new Event(['payload' => [
             'id_user' => $id_user,
             'id_workspace' => $workspaceModel->id_workspace

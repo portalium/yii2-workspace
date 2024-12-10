@@ -51,7 +51,7 @@ class AssignmentController extends WebController
         }
         if (!Yii::$app->workspace->checkSupportRoles()) {
             Yii::$app->session->setFlash('error', Module::t('Please set default role for workspace module.'));
-            return $this->redirect(['index']);
+            return $this->redirect(['/workspace/default/index']);
         }
         $workspace = $this->findModel($id);
 
