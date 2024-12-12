@@ -93,7 +93,7 @@ class Workspace extends Component
                     return false;
                 }
             } catch (\Exception $e) {
-                return false;
+                continue;
             }
         }
         return true;

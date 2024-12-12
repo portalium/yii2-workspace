@@ -16,7 +16,12 @@ use yii\helpers\Url;
 /** @var portalium\workspace\models\Workspace $model */
 
 $this->title = $model->name;
-$this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['index']];
+$referer = Yii::$app->request->referrer;
+if ($referer && strpos($referer, 'manage') !== false) {
+    $this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['/workspace/default/manage']];
+} else {
+    $this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['/workspace/default/index']];
+}
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 $this->registerCss(
