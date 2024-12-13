@@ -33,6 +33,7 @@ class m230523_200101_workspace_setting extends Migration
             $workspace->save(); */
             $this->insert(WorkspaceModule::$tablePrefix . 'workspace', [
                 'name' => 'SystemWorkspace',
+                'title'=> 'System Workspace',
                 'id_user' => 1,
                 'date_create' => date('Y-m-d H:i:s'),
                 'date_update' => date('Y-m-d H:i:s'),
