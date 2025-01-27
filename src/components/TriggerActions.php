@@ -28,7 +28,7 @@ class TriggerActions extends BaseObject
     private function deleteWorkspaceUserRoles($roleName)
     {
         $workspaceUserRoles = WorkspaceUser::find()->where(['role' => $roleName])->all();
-        
+
         foreach ($workspaceUserRoles as $workspaceUserRole) {
             $workspaceUserRole->delete();
         }
@@ -55,10 +55,10 @@ class TriggerActions extends BaseObject
     public function onSettingUpdateAfter($event)
     {
         ['data' => $data, 'changedAttributes' => $changedAttributes] = $event->payload;
-        
-        if($data['name'] == 'workspace::available_roles'){
+
+        if ($data['name'] == 'workspace::available_roles') {
             $oldRoles = [];
-            if(isset($changedAttributes['value'])){
+            if (isset($changedAttributes['value'])) {
                 foreach (json_decode($changedAttributes['value']) as $module => $roles) {
                     foreach ($roles as $role) {
                         $oldRoles[] = [
@@ -69,7 +69,7 @@ class TriggerActions extends BaseObject
                 }
             }
             $newRoles = [];
-            if(isset($data['value'])){
+            if (isset($data['value'])) {
                 foreach (json_decode($data['value']) as $module => $roles) {
                     foreach ($roles as $role) {
                         $newRoles[] = [
@@ -83,26 +83,11 @@ class TriggerActions extends BaseObject
 
             $deletedRoles = [];
             foreach ($oldRoles as $oldRole) {
-                if(!in_array($oldRole, $newRoles)){
+                if (!in_array($oldRole, $newRoles)) {
                     $deletedRoles[] = $oldRole;
                 }
             }
-            if($deletedRoles){
-                foreach ($deletedRoles as $deletedRole) {
-                    $checkRolesWorkspaceUser = WorkspaceUser::find()->where(['role' => $deletedRole['role'], 'id_module' => $deletedRole['module']])->one();
-                    if($checkRolesWorkspaceUser){
-//                        $settingModel = Yii::$app->setting->getSetting('workspace::available_roles');
-//                        $settingModel->value = $changedAttributes['value'];
-//                        if($settingModel->save()) {
-//                            Yii::$app->session->addFlash('error', Yii::t('workspace', 'You can not delete this role because it is used in workspace.'));
-//                        }
-//                        break;
-                    }
-                }
-            }else{
-                $deletedRoles = [];
-            }
-            
+
             Event::trigger(Yii::$app->getModules(), Module::EVENT_ROLE_UPDATE_AFTER, new Event(['payload' => [
                 'deletedRoles' => $deletedRoles
             ]]));
@@ -114,13 +99,15 @@ class TriggerActions extends BaseObject
         ['id' => $id_user] = $event->payload;
         $user = User::findOne($id_user);
         $workspaceModel = new Workspace();
-        $workspaceModel->name = 'Home';
+        $workspaceModel->name = strtolower($user->username) . 'workspace';
+        $workspaceModel->title = 'Home';
         $workspaceModel->id_user = $user->id_user;
-        $workspaceModel->save();
+        if(!$workspaceModel->save()){
+            Yii::error($workspaceModel->errors);
+        }
         Event::trigger(Yii::$app->getModules(), Module::EVENT_USER_CREATE_AFTER, new Event(['payload' => [
             'id_user' => $id_user,
             'id_workspace' => $workspaceModel->id_workspace
         ]]));
-
     }
 }

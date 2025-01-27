@@ -2,6 +2,7 @@
 
 namespace portalium\workspace\models;
 
+use portalium\site\models\Setting;
 use Yii;
 use portalium\workspace\Module;
 use portalium\workspace\models\WorkspaceUser;
@@ -24,7 +25,7 @@ class Workspace extends \yii\db\ActiveRecord
 {
     /**
      * {@inheritdoc}
-     * 
+     *
      * @return string
      */
     public static function tableName()
@@ -34,7 +35,7 @@ class Workspace extends \yii\db\ActiveRecord
 
     /**
      * {@inheritdoc}
-     * 
+     *
      * @return array
      */
     public function rules()
@@ -44,14 +45,16 @@ class Workspace extends \yii\db\ActiveRecord
             [['id_user'], 'integer'],
             [['date_create', 'date_update'], 'safe'],
             [['title'], 'string', 'max' => 255],
-            [['name'], 'string', 'max' => 255],
             [['id_user'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['id_user' => 'id_user']],
+            [['name'], 'string', 'max' => 64],
+            [['name'], 'unique'],
+            [['name'], 'match', 'pattern' => '/^[a-z-0-9]+(?:-[a-z-0-9]+)*$/', 'message' => Module::t('Only word characters and dashes are allowed.')],
         ];
     }
 
     /**
      * {@inheritdoc}
-     * 
+     *
      * @return array
      */
     public function behaviors()
@@ -64,17 +67,7 @@ class Workspace extends \yii\db\ActiveRecord
                     \yii\db\ActiveRecord::EVENT_BEFORE_UPDATE => ['date_update'],
                 ],
                 'value' => new \yii\db\Expression('NOW()'),
-            ],
-            'name' => [
-                'class' => 'yii\behaviors\AttributeBehavior',
-                'attributes' => [
-                    \yii\db\ActiveRecord::EVENT_BEFORE_INSERT => 'name',
-                    \yii\db\ActiveRecord::EVENT_BEFORE_UPDATE => 'name',
-                ],
-                'value' => function ($event) {
-                    return $this->generateName();
-                },
-            ],
+            ]
         ];
     }
 
@@ -88,7 +81,7 @@ class Workspace extends \yii\db\ActiveRecord
 
     /**
      * {@inheritdoc}
-     * 
+     *
      * @return array
      */
     public function attributeLabels()
@@ -113,9 +106,9 @@ class Workspace extends \yii\db\ActiveRecord
         return $this->hasMany(WorkspaceUser::class, ['id_workspace' => 'id_workspace'])->groupBy('');
     }
 
-    /** 
+    /**
      * Gets query for [[User]].
-     * 
+     *
      * @return \yii\db\ActiveQuery
      */
     public function getUser()
@@ -169,6 +162,9 @@ class Workspace extends \yii\db\ActiveRecord
                 $workspaceUser = new WorkspaceUser();
                 $workspaceUser->id_workspace = $this->id_workspace;
                 $workspaceUser->id_user = Yii::$app->user->id;
+                if (!Setting::find()->where(['name' => $key . '::workspace::admin_role'])->exists()) {
+                    continue;
+                }
                 $workspaceUser->role = Yii::$app->setting->getValue($key . '::workspace::admin_role');
                 $workspaceUser->id_module = $key;
                 $activeWorkspaceId = Yii::$app->workspace->id;
@@ -205,6 +201,7 @@ class Workspace extends \yii\db\ActiveRecord
             $workspaceUser->delete();
         }
     }
+
     /**
      * Deletes all invitations and workspace users before deleting a workspace.
      *
