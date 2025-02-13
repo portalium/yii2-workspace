@@ -4,7 +4,6 @@ use yii\helpers\Url;
 use yii\helpers\Html;
 
 use portalium\workspace\Module;
-
 use portalium\theme\widgets\Panel;
 use portalium\theme\widgets\GridView;
 use portalium\workspace\models\Workspace;
@@ -30,7 +29,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'columns' => [
-            ['class' => 'portalium\grid\SerialColumn'],
+            ['class' => 'yii\grid\SerialColumn'],
             'name',
             'user.username',
             [
