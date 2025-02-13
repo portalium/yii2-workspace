@@ -30,7 +30,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
+            ['class' => 'portalium\grid\SerialColumn'],
             'name',
             'user.username',
             [
@@ -42,7 +42,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'buttons' => [
                     'assign' => function ($url, $model) {
                         return Html::a(
-                            Html::tag('i', '', ['class' => 'fa fa-thin fa-user']),
+                            Html::tag('i', '', ['class' => 'fa fa-user text-warning']),
                             ['/workspace/assignment/assignment', 'id' => $model->id_workspace],
                             ['title' => Module::t('Assign'), 'class' => 'btn btn-warning btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
                         );
