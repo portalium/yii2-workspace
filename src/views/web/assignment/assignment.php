@@ -14,7 +14,7 @@ use portalium\workspace\bundles\AssignmentAsset;
 /** @var portalium\workspace\models\Workspace $model */
 
 $this->title = $model->name;
-$this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['default/index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 $this->registerCss(
