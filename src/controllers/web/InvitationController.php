@@ -190,6 +190,7 @@ class InvitationController extends WebController
      */
     public function actionDelete($id, $all = false)
     {
+        die('delete çalıştı');
         $model = Invitation::findOne($id);
         if (!$model || (!\Yii::$app->user->can('workspaceWebDefaultDeleteInvitation', ['id_module' => 'workspace', 'model' => $this->findWorkspace($model->id_workspace)]))) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
@@ -298,6 +299,8 @@ class InvitationController extends WebController
     public function actionDetail($id)
     {
         $model = Invitation::findOne($id);
+
+        
         if (!\Yii::$app->user->can('workspaceWebDefaultView', ['id_module' => 'workspace', 'model' => $this->findWorkspace($model->id_workspace)])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
@@ -312,6 +315,7 @@ class InvitationController extends WebController
         return $this->render('detail', [
             'model' => $model,
             'dataProvider' => $dataProvider
+            
         ]);
     }
 

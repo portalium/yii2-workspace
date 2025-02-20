@@ -40,7 +40,7 @@ $this->registerCss(
             'dataProvider' => $dataProvider,
             // 'filterModel' => $searchModel,
             'columns' => [
-                ['class' => 'portalium\grid\SerialColumn'],
+                ['class' => 'yii\grid\SerialColumn'],
                 'email',
                 [
                     'attribute' => 'status',
