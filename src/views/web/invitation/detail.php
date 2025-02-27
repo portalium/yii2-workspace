@@ -66,9 +66,13 @@ $this->registerCss(
                             );
                         },
                         'delete' => function ($url, $model, $key) {
-                            return Html::button(
+                            return Html::a(
                                 Html::tag('i', '', ['class' => 'fa fa-trash']),
-                                ['class' => 'btn btn-danger btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;', 'onclick' => 'deleteInvitation(' . $model->id_invitation . ')']
+                                ['delete', 'id' => $model->id_invitation],
+                                ['class' => 'btn btn-danger btn-xs',
+                                'style' => 'padding: 2px 9px 2px 9px; display: inline-block;',
+                                'data-confirm' => Module::t('Are you sure you want to delete this invitation?'),
+                                'data-method' => 'post']
                             );
                         },
                     ],
