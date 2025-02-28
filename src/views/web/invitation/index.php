@@ -128,7 +128,7 @@ $this->registerCss(
             'dataProvider' => $invitationDataProvider,
             'filterModel' => $invitationSearchModel,
             'columns' => [
-                ['class' => 'yii\grid\SerialColumn'],
+                ['class' => 'portalium\grid\SerialColumn'],
                 [
                     'attribute' => 'invitation_token',
                     'label' => Module::t('Invitation Url'),
