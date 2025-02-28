@@ -2,9 +2,7 @@
 
 use yii\helpers\Url;
 use yii\helpers\Html;
-
 use portalium\workspace\Module;
-
 use portalium\theme\widgets\Panel;
 use portalium\theme\widgets\GridView;
 use portalium\workspace\models\Workspace;
