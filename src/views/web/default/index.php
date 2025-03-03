@@ -1,63 +1,85 @@
 <?php
 
-use yii\helpers\Url;
+use portalium\theme\widgets\ActionColumn;
+use portalium\theme\widgets\ActiveForm;
+use portalium\theme\widgets\GridView;
+use portalium\theme\widgets\Modal;
 use yii\helpers\Html;
 use portalium\workspace\Module;
+use yii\widgets\DetailView;
 use portalium\theme\widgets\Panel;
-use portalium\theme\widgets\GridView;
+use portalium\widgets\Pjax;
+use portalium\workspace\models\Invitation;
+use portalium\workspace\models\InvitationRole;
 use portalium\workspace\models\Workspace;
-use portalium\theme\widgets\ActionColumn;
+use yii\helpers\Url;
 
 /** @var yii\web\View $this */
-/** @var portalium\workspace\models\WorkspaceSearch $searchModel */
-/** @var yii\data\ActiveDataProvider $dataProvider */
+/** @var portalium\workspace\models\Workspace $model */
 
-$this->title = Module::t('Workspaces');
+$this->title = $model->workspace->name;
+$this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['/workspace/default/index']];
+$this->params['breadcrumbs'][] = ['label' => Module::t('Invitations'), 'url' => ['index', 'id' => $model->id_workspace]];
 $this->params['breadcrumbs'][] = $this->title;
-
+\yii\web\YiiAsset::register($this);
+$this->registerCss(
+    <<<CSS
+    
+    CSS
+);
 ?>
-
-<div class="workspace-index">
-
-    <?php
-    $actions[] = Html::a(Module::t(''), ['create'], ['class' => 'btn btn-success fa fa-plus', 'id' => 'create-workspace']);
-    Panel::begin(['title' => Module::t('Workspace'), 'actions' => $actions]);
-    ?>
-
-    <?= GridView::widget([
-        'dataProvider' => $dataProvider,
-        'filterModel' => $searchModel,
-        'columns' => [
-            ['class' => 'portalium\grid\SerialColumn'],
-            'name',
-            'user.username',
-            [
-                'class' => ActionColumn::className(),
-                'urlCreator' => function ($action, Workspace $model, $key, $index, $column) {
-                    return Url::toRoute([$action, 'id' => $model->id_workspace]);
-                },
-                'template' => '{view} {update} {delete} {assign} {invitation}',
-                'buttons' => [
-                    'assign' => function ($url, $model) {
-                        return Html::a(
-                            Html::tag('i', '', ['class' => 'fa fa-user text-warning']),
-                            ['/workspace/assignment/assignment', 'id' => $model->id_workspace],
-                            ['title' => Module::t('Assign'), 'class' => 'btn btn-warning btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
-                        );
+<div class="workspace-view">
+    <p>
+        <?php Panel::begin([
+            'title' => Html::encode($this->title),
+            'actions' => [
+            ]
+        ]) ?>
+        <?= GridView::widget([
+            'dataProvider' => $dataProvider,
+            // 'filterModel' => $searchModel,
+            'columns' => [
+                ['class' => 'portalium\grid\SerialColumn'],
+                'email',
+                [
+                    'attribute' => 'status',
+                    'label' => Module::t('Status'),
+                    'format' => 'raw',
+                    'value' => function ($model) {
+                        return InvitationRole::getStatusList()[$model->status];
                     },
-                    'invitation' => function ($url, $model) {
-                        return Html::a(
-                            Html::tag('i', '', ['class' => 'fa fa-thin fa-envelope']),
-                            ['/workspace/invitation/index', 'id' => $model->id_workspace],
-                            ['title' => Module::t('Invitation'), 'class' => 'btn btn-info btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
-                        );
+                    'filter' => InvitationRole::getStatusList()
+                ],
+                [
+                    'class' => ActionColumn::className(),
+                    'urlCreator' => function ($action, InvitationRole $model, $key, $index, $column) {
+                        return Url::toRoute([$action, 'id' => $model->id_invitation]);
                     },
+                    'template' => '{delete} {resend}',
+                    'buttons' => [
+                        'resend' => function ($url, $model, $key) {
+                            return Html::a(
+                                Html::tag('i', '', ['class' => 'fa fa-refresh']),
+                                ['resend', 'id' => $model->id_invitation],
+                                ['class' => 'btn btn-primary btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;', 'data-confirm' => Module::t('Are you sure resend this invitation?')]
+                            );
+                        },
+                        'delete' => function ($url, $model, $key) {
+                            return Html::a(
+                                Html::tag('i', '', ['class' => 'fa fa-trash']),
+                                ['delete', 'id' => $model->id_invitation],
+                                ['class' => 'btn btn-danger btn-xs',
+                                    'style' => 'padding: 2px 9px 2px 9px; display: inline-block;',
+                                    'data-confirm' => Module::t('Are you sure you want to delete this invitation?'),
+                                    'data-method' => 'post']
+                            );
+                        },
+                    ],
                 ],
             ],
-        ],
-        'layout' => '{items}{summary}{pagesizer}{pager}',
-    ]); ?>
-
-    <?php Panel::end(); ?>
+        ]); ?>
+        <?php
+        Panel::end()
+        ?>
 
 </div>
