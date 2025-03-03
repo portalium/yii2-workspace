@@ -35,7 +35,6 @@ $this->registerCss(
             'actions' => [
             ]
         ]) ?>
-
         <?= GridView::widget([
             'dataProvider' => $dataProvider,
             // 'filterModel' => $searchModel,

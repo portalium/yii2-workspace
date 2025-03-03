@@ -14,7 +14,7 @@ use portalium\workspace\bundles\AssignmentAsset;
 /** @var portalium\workspace\models\Workspace $model */
 
 $this->title = $model->name;
-$this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['default/index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 $this->registerCss(
@@ -105,7 +105,7 @@ $this->registerCss(
             <?php Modal::begin([
                 'id' => 'roleModalUpdate',
                 'title' => Module::t('Roles'),
-                'footer' => Html::button(Module::t('Close'), ['class' => 'btn btn-assignment', 'data-bs-dismiss' => 'modal']) . Html::button(Module::t('Select'), ['class' => 'btn btn-primary', 'id' => 'role-select-update']),
+                'footer' => Html::button(Module::t('Cancel'), ['class' => 'btn btn-assignment', 'data-bs-dismiss' => 'modal']) . Html::button(Module::t('Select'), ['class' => 'btn btn-primary', 'id' => 'role-select-update']),
             ]) ?>
             <div class="mb-3 row">
                 <label class="col-sm-2 col-form-label" for="role-list-update"><?= Module::t('Roles')?></label>
