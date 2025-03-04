@@ -89,7 +89,7 @@ class AssignmentController extends WebController
             if (!isset($availableRoles[$key])) {
                 continue;
             }
-                
+
             $dynamicModuleModel->defineAttribute($key);
             // add rule for dynamic attributes
             $dynamicModuleModel->addRule($key, 'in', ['range' => $availableRoles[$key]]);
@@ -135,6 +135,8 @@ class AssignmentController extends WebController
 
         $workspaceUsers = WorkspaceUser::find()->where(['id_workspace' => $id_workspace, 'id_user' => $users, 'id_module' => $id_module, 'role' => $role])->all();
 
+        $roleAssignedSuccessfully = false;
+        $roleSkipped = false;
         foreach ($users as $user) {
             $workspaceUser = array_filter($workspaceUsers, function ($workspaceUser) use ($user) {
                 return $workspaceUser->id_user == $user;
@@ -148,15 +150,28 @@ class AssignmentController extends WebController
                 $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
             }
             $workspaceUser->role = $role;
+
+            if (empty($role) || $role == 'none' || $role == null) {
+                $roleSkipped = true;
+                continue;
+            }
+
+
+
             if (!Yii::$app->workspace->isAvailableRole($workspaceUser->id_module, $workspaceUser->role)) {
                 Yii::$app->session->addFlash('error', Module::t('Role is not available for this module.'));
                 return false;
             }
             $workspaceUser->save();
+            $roleAssignedSuccessfully = true;
         }
 
-        // Display success message to user
-        Yii::$app->session->addFlash('success', 'Users assigned to role successfully.');
+        if ($roleSkipped) {
+            Yii::$app->session->addFlash('error', Module::t('Some users were not assigned a role because the role was not selected.'));
+        }
+        if ($roleAssignedSuccessfully) {
+            Yii::$app->session->addFlash('success', 'Users assigned to role successfully.');
+        }
 
         // Return true if the action was successful
         return true;
