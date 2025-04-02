@@ -100,5 +100,6 @@ return [
     'You can not remove user %s from workspace %s because he is an administrator.' => '%s kullanıcısını %s çalışma alanından kaldıramazsınız çünkü o bir yönetici.',
     'You are not allowed to set this workspace.' => 'Bu çalışma alanını ayarlamanıza izin verilmiyor.',
     'Are you sure you want to delete this item?' => 'Bu öğeyi silmek istediğinizden emin misiniz?',
+    'Available Roles' => 'Mevcut Roller',
 
 ];
