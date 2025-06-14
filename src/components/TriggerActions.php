@@ -99,7 +99,7 @@ class TriggerActions extends BaseObject
         ['id' => $id_user] = $event->payload;
         $user = User::findOne($id_user);
         $workspaceModel = new Workspace();
-        $workspaceModel->name = strtolower($user->username) . 'workspace';
+        $workspaceModel->name = str_replace('_','-',strtolower($user->username)) . '-workspace';
         $workspaceModel->title = 'Home';
         $workspaceModel->id_user = $user->id_user;
         if(!$workspaceModel->save()){
@@ -109,5 +109,15 @@ class TriggerActions extends BaseObject
             'id_user' => $id_user,
             'id_workspace' => $workspaceModel->id_workspace
         ]]));
+    }
+
+    public function onUserDeleteBefore($event)
+    {
+        ['id' => $id_user] = $event->payload;
+
+        $workspaces = Workspace::find()->where(['id_user' => $id_user])->all();
+        foreach ($workspaces as $workspace) {
+            $workspace->delete();
+        }
     }
 }

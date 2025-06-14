@@ -138,6 +138,7 @@ class Workspace extends \yii\db\ActiveRecord
         $name = strtolower($name);
         $name = trim($name, '-');
         $name = preg_replace('/-+/', '-', $name);
+        $name = str_replace('_', '-', $name);
         if (Workspace::find()->where(['name' => $name, 'id_user' => $this->id_user])->exists()) {
             $name = $name . '-' . Yii::$app->security->generateRandomString(5);
         }
@@ -169,6 +170,7 @@ class Workspace extends \yii\db\ActiveRecord
                 $workspaceUser->id_module = $key;
                 $activeWorkspaceId = Yii::$app->workspace->id;
                 if ($activeWorkspaceId) {
+                    Yii::warning('Setting workspace user status to inactive for module: ' . $key, 'workspace');
                     $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
                 } else {
                     $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;

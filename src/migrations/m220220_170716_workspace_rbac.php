@@ -14,7 +14,7 @@ class m220220_170716_workspace_rbac extends Migration
 
         $permissions = [
             'workspaceWebDefaultIndex' => 'View workspace page',
-            'workspaceWebDefaultManage' => 'Manage workspace',
+            'workspaceWebDefaultManage' => 'Manage Subscription',
             'workspaceWebDefaultView' => 'View workspace information',
             'workspaceWebDefaultCreate' => 'Create workspace',
             'workspaceWebDefaultUpdate' => 'Update workspace information',

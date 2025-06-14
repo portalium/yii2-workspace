@@ -24,7 +24,7 @@ class WorkspaceUser extends \yii\db\ActiveRecord
 {
     const STATUS_ACTIVE = 1;
     const STATUS_INACTIVE = 0;
-    
+
     /**
      * {@inheritdoc}
      */
@@ -44,6 +44,11 @@ class WorkspaceUser extends \yii\db\ActiveRecord
             [['role', 'id_module'], 'string', 'max' => 32],
             [['id_user'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['id_user' => 'id_user']],
         ];
+    }
+
+    public function extraFields()
+    {
+        return ['workspace', 'user'];
     }
 
     /**
@@ -95,6 +100,22 @@ class WorkspaceUser extends \yii\db\ActiveRecord
             return $workspace->id_workspace;
         }
         return null;
+    }
+
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if (!$this->isNewRecord && $this->status == self::STATUS_ACTIVE) {
+                $previousStatus = $this->getOldAttribute('status');
+                if ($previousStatus == self::STATUS_INACTIVE) {
+                    self::updateAll(['status' => self::STATUS_INACTIVE], ['id_user' => $this->id_user]);
+                    $this->status = self::STATUS_ACTIVE;
+                    parent::beforeSave($insert);
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     public static function find()

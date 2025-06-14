@@ -75,6 +75,9 @@ $(document).ready(function () {
      * @param {string} modalSelector The modal selector.
      */
     async function assignAction(selectedValues, selectedRole, id_workspace, modalSelector, id_module, type) {
+        if (selectedRole === '' || selectedRole === null) {
+            return;
+        }
         // Send AJAX request to assign action with selected users, role, and workspace ID
         return await new Promise((resolve, reject) => {
             $.get('assign', {
