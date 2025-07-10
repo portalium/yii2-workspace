@@ -99,10 +99,10 @@ class TriggerActions extends BaseObject
         ['id' => $id_user] = $event->payload;
         $user = User::findOne($id_user);
         $workspaceModel = new Workspace();
-        $workspaceModel->name = str_replace('_','-',strtolower($user->username)) . '-workspace';
+        $workspaceModel->name = str_replace('_', '-', strtolower($user->username)) . '-workspace';
         $workspaceModel->title = 'Home';
         $workspaceModel->id_user = $user->id_user;
-        if(!$workspaceModel->save()){
+        if (!$workspaceModel->save()) {
             Yii::error($workspaceModel->errors);
         }
         Event::trigger(Yii::$app->getModules(), Module::EVENT_USER_CREATE_AFTER, new Event(['payload' => [
@@ -119,5 +119,6 @@ class TriggerActions extends BaseObject
         foreach ($workspaces as $workspace) {
             $workspace->delete();
         }
+        Workspace::deleteAll(['id_user' => null]);
     }
 }

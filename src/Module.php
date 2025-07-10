@@ -11,6 +11,7 @@ class Module extends \portalium\base\Module
     const EVENT_USER_CREATE_AFTER = 'userCreateAfter';
 
     const EVENT_WORKSPACE_CREATE_AFTER = 'workspaceCreateAfter';
+    const EVENT_WORKSPACE_DELETE_BEFORE = 'workspaceDeleteBefore';
     
     public $apiRules = [
         [
