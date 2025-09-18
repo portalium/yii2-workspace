@@ -19,7 +19,7 @@ $this->registerCss(
     CSS
 );
 // echo $form->field($model, 'email')->textInput(['maxlength' => true]);
-echo $form->field($model, 'emails')->widget(Select2::className(), [
+echo $form->field($model, 'emails')->label(Module::t('Users'))->widget(Select2::className(), [
     'name' => 'color_3',
     'data' => array_map(function ($item) {
         return Module::t($item);
@@ -31,7 +31,7 @@ echo $form->field($model, 'emails')->widget(Select2::className(), [
         'selectOptions' => ['class' => 'text-success'],
         'unselectOptions' => ['class' => 'text-danger'],
     ],
-    'options' => ['placeholder' => 'Select or add a user ...', 'multiple' => true, 'style' => 'width:100%'],
+    'options' => ['placeholder' => Module::t('Select and add a user ...'), 'multiple' => true, 'style' => 'width:100%'],
     'pluginOptions' => [
         'tags' => true,
     ],
@@ -50,7 +50,7 @@ echo $form->field($model, 'date_expire')->widget(DatePicker::classname(), [
 ?>
 
 <div class="mb-3 row field-invitationform-emails required">
-<label class="col-sm-2 col-form-label" for="invitationform-emails">Roles</label>
+<label class="col-sm-2 col-form-label" for="invitationform-emails"><?php echo Module::t('Roles') ?></label>
 <div class="col-sm-10">
 <div style="border-width: 1px; border-style: solid; border-color: #dee2e6; border-image: initial; padding-top: 13px;   padding-left: 10px;
     padding-right: 10px;
@@ -61,7 +61,7 @@ echo $form->field($model, 'date_expire')->widget(DatePicker::classname(), [
         foreach ($availableRoles[$key] as $role) {
             $availableRole[$role] = $role;
         }
-        echo $form->field($dynamicModuleModel, $key)->dropDownList($availableRole, ['prompt' => 'Select Role', 'class' => 'form-control', 'style' => 'margin-bottom: 5px;']);
+        echo $form->field($dynamicModuleModel, $key)->dropDownList($availableRole, ['prompt' => Module::t('Select Role'), 'class' => 'form-control', 'style' => 'margin-bottom: 5px;']);
     }
     ?>
 </div>

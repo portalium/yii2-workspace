@@ -22,7 +22,7 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="workspace-index">
 
     <?php
-    $actions[] = Html::a(Module::t(''), ['create'], ['class' => 'btn btn-success fa fa-plus', 'id' => 'create-workspace']);
+    $actions[] = Html::a('', ['create'], ['class' => 'btn btn-success fa fa-plus', 'id' => 'create-workspace', 'title' => Module::t('Create')]);
     Panel::begin(['title' => Module::t('Workspace'), 'actions' => $actions]);
     ?>
 
@@ -34,7 +34,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'name',
             'user.username',
             [
-                'class' => ActionColumn::className(),
+                'class' => ActionColumn::className(), 'header' => Module::t('Actions'),
                 'urlCreator' => function ($action, Workspace $model, $key, $index, $column) {
                     return Url::toRoute([$action, 'id' => $model->id_workspace]);
                 },
@@ -61,5 +61,4 @@ $this->params['breadcrumbs'][] = $this->title;
     ]); ?>
 
     <?php Panel::end(); ?>
-
 </div>

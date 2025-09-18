@@ -150,10 +150,15 @@ class AssignmentController extends WebController
             }
             $workspaceUser->role = $model->role;
             $workspaceUser->save();
+            $roleAssignedSuccessfully = true;
         }
 
-        // Display success message to user
-        Yii::$app->session->addFlash('success', 'Users assigned to role successfully.');
+        if ($roleSkipped) {
+            Yii::$app->session->addFlash('error', Module::t('Some users were not assigned a role because the role was not selected.'));
+        }
+        if ($roleAssignedSuccessfully) {
+            Yii::$app->session->addFlash('success', 'Users assigned to role successfully.');
+        }
 
         // Return true if the action was successful
         return true;

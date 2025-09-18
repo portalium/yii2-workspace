@@ -14,7 +14,7 @@ use portalium\workspace\bundles\AssignmentAsset;
 /** @var portalium\workspace\models\Workspace $model */
 
 $this->title = $model->name;
-$this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['default/index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 $this->registerCss(
@@ -96,8 +96,8 @@ $this->registerCss(
         <div class="col-md-2">
             <div class="text-center" style="position: relative; top: 50%;">
                 <div class="btn-group-vertical" style="transform: translateY(-50%);">
-                    <?= Html::button(Html::tag('i', '', ['class' => 'fa fa-arrow-left']), ['class' => 'btn btn-danger', 'id' => 'removeButton']) ?>
-                    <?= Html::button(Html::tag('i', '', ['class' => 'fa fa-arrow-right']), ['class' => 'btn btn-success', 'id' => 'role-select',]) ?>
+                        <?= Html::button(Html::tag('i', '', ['class' => 'fa fa-arrow-left']), ['class' => 'btn btn-danger', 'id' => 'removeButton', 'title' => Module::t('Remove')]) ?>
+                    <?= Html::button(Html::tag('i', '', ['class' => 'fa fa-arrow-right']), ['class' => 'btn btn-success', 'id' => 'role-select', 'title' => Module::t('Assign')]) ?>
                 </div>
             </div>
         </div>
@@ -110,7 +110,7 @@ $this->registerCss(
             <div class="mb-3 row">
                 <label class="col-sm-2 col-form-label" for="role-list-update"><?= Module::t('Roles')?></label>
                 <div class="col-sm-10">
-                    <?= Html::dropDownList('id_module_update', null, $moduleArray, ['id' => 'module-list-update', 'prompt' => 'Select Module', 'class' => 'form-control', 'style' => 'margin-bottom: 5px;']) ?>
+                    <?= Html::dropDownList('id_module_update', null, $moduleArray, ['id' => 'module-list-update', 'prompt' => Module::t('Select Module'), 'class' => 'form-control', 'style' => 'margin-bottom: 5px;']) ?>
                     <?php
                     echo DepDrop::widget([
                         'name' => 'rolesUpdate',
@@ -131,7 +131,7 @@ $this->registerCss(
             <?php Panel::begin([
                 'title' => Html::encode(Module::t('Assigned Users')),
                 'actions' => [
-                    Html::button(Html::tag('i', '', ['class' => 'fa fa-pencil']), ['class' => 'btn btn-primary btn-sm', 'id' => 'editButton', 'style' => 'margin-top: -4px; margin-bottom: -5px;', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#roleModalUpdate',]),
+                    Html::button(Html::tag('i', '', ['class' => 'fa fa-pencil']), ['class' => 'btn btn-primary btn-sm', 'title' => Module::t('Update'), 'id' => 'editButton', 'style' => 'margin-top: -4px; margin-bottom: -5px;', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#roleModalUpdate',]),
                 ],
             ]) ?>
             <?= Html::textInput('assigned-users-search', '', ['class' => 'form-control', 'id' => 'assigned-users-search', 'placeholder' => Module::t('Search assigned users'), 'style' => 'margin-bottom: 5px;']) ?>
