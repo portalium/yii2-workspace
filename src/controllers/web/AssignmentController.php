@@ -129,7 +129,7 @@ class AssignmentController extends WebController
             Yii::$app->session->addFlash('error', 'Please fill all required fields.');
             return $model->errors;
         }
-        
+
         if ($model->type == 'update') {
             return $this->actionAssignUpdate();
         }
@@ -242,14 +242,13 @@ class AssignmentController extends WebController
             $count = count(array_filter($checkWorkspacesDataProvider, function ($workspaceUserCount) use ($workspaceUser) {
                 return $workspaceUserCount->role == $workspaceUser->role && $workspaceUserCount->id_module == $workspaceUser->id_module;
             }));
-            if (isset($workspaceAdminRoles[$workspaceUser->id_module]) && $workspaceUser->role == $workspaceAdminRoles[$workspaceUser->id_module] && $count < 2) {
+            if (isset($workspaceAdminRoles[$workspaceUser->id_module]) && $workspaceUser->role == $workspaceAdminRoles[$workspaceUser->id_module] && $count < 2 && $workspaceUser->workspace->id_user == $workspaceUser->id_user) {
                 Yii::$app->session->addFlash('error', sprintf(Module::t('You can not remove user %s from workspace %s because he is an administrator.'), $workspaceUser->user->username, $workspaceUser->workspace->name));
             } else {
                 $deletebleWorkspaceUsers[] = $workspaceUser->id_workspace_user;
                 unset($checkWorkspacesDataProvider[array_search($workspaceUser, $workspaceUsers)]);
             }
         }
-
         WorkspaceUser::deleteAll(['id_workspace_user' => $deletebleWorkspaceUsers]);
         Yii::$app->session->addFlash('success', 'Users removed from role successfully.');
         return true;

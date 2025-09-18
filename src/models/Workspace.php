@@ -174,7 +174,6 @@ class Workspace extends \yii\db\ActiveRecord
                 $workspaceUser->id_module = $key;
                 $activeWorkspaceId = Yii::$app->workspace->id;
                 if ($activeWorkspaceId) {
-                    Yii::warning('Setting workspace user status to inactive for module: ' . $key, 'workspace');
                     $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
                 } else {
                     $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
