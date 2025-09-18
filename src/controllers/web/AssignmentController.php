@@ -2,6 +2,7 @@
 
 namespace portalium\workspace\controllers\web;
 
+use portalium\workspace\models\AssignmentForm;
 use Yii;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
@@ -91,9 +92,7 @@ class AssignmentController extends WebController
             }
 
             $dynamicModuleModel->defineAttribute($key);
-            // add rule for dynamic attributes
             $dynamicModuleModel->addRule($key, 'in', ['range' => $availableRoles[$key]]);
-            // set _labels for dynamic attributes
             $labels[$key] = isset(Yii::$app->getModule($key)::$name) ? Yii::$app->getModule($key)::$name : $key;
         }
         $dynamicModuleModel->_labels = $labels;
@@ -123,21 +122,21 @@ class AssignmentController extends WebController
         if (!\Yii::$app->user->can('workspaceWebDefaultAssign', ['id_module' => 'workspace', 'model' => $this->findModel($id_workspace)])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
-        // Retrieve role, users, and workspace ID from the request
-        $role = Yii::$app->request->get('role');
-        $users = Yii::$app->request->get('selected_values');
-        $id_module = Yii::$app->request->get('id_module');
-        $type = Yii::$app->request->get('type');
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $model = new AssignmentForm();
+        $model->load(Yii::$app->request->get(), '');
+        if (!$model->validate()) {
+            Yii::$app->session->addFlash('error', 'Please fill all required fields.');
+            return $model->errors;
+        }
 
-        if ($type == 'update') {
+        if ($model->type == 'update') {
             return $this->actionAssignUpdate();
         }
 
-        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace' => $id_workspace, 'id_user' => $users, 'id_module' => $id_module, 'role' => $role])->all();
+        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace' => $id_workspace, 'id_user' => $model->selected_values, 'id_module' => $model->id_module, 'role' => $model->role])->all();
 
-        $roleAssignedSuccessfully = false;
-        $roleSkipped = false;
-        foreach ($users as $user) {
+        foreach ($model->selected_values as $user) {
             $workspaceUser = array_filter($workspaceUsers, function ($workspaceUser) use ($user) {
                 return $workspaceUser->id_user == $user;
             });
@@ -146,22 +145,10 @@ class AssignmentController extends WebController
                 $workspaceUser = new WorkspaceUser();
                 $workspaceUser->id_workspace = $id_workspace;
                 $workspaceUser->id_user = $user;
-                $workspaceUser->id_module = $id_module;
+                $workspaceUser->id_module = $model->id_module;
                 $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
             }
-            $workspaceUser->role = $role;
-
-            if (empty($role) || $role == 'none' || $role == null) {
-                $roleSkipped = true;
-                continue;
-            }
-
-
-
-            if (!Yii::$app->workspace->isAvailableRole($workspaceUser->id_module, $workspaceUser->role)) {
-                Yii::$app->session->addFlash('error', Module::t('Role is not available for this module.'));
-                return false;
-            }
+            $workspaceUser->role = $model->role;
             $workspaceUser->save();
             $roleAssignedSuccessfully = true;
         }
@@ -260,14 +247,13 @@ class AssignmentController extends WebController
             $count = count(array_filter($checkWorkspacesDataProvider, function ($workspaceUserCount) use ($workspaceUser) {
                 return $workspaceUserCount->role == $workspaceUser->role && $workspaceUserCount->id_module == $workspaceUser->id_module;
             }));
-            if (isset($workspaceAdminRoles[$workspaceUser->id_module]) && $workspaceUser->role == $workspaceAdminRoles[$workspaceUser->id_module] && $count < 2) {
+            if (isset($workspaceAdminRoles[$workspaceUser->id_module]) && $workspaceUser->role == $workspaceAdminRoles[$workspaceUser->id_module] && $count < 2 && $workspaceUser->workspace->id_user == $workspaceUser->id_user) {
                 Yii::$app->session->addFlash('error', sprintf(Module::t('You can not remove user %s from workspace %s because he is an administrator.'), $workspaceUser->user->username, $workspaceUser->workspace->name));
             } else {
                 $deletebleWorkspaceUsers[] = $workspaceUser->id_workspace_user;
                 unset($checkWorkspacesDataProvider[array_search($workspaceUser, $workspaceUsers)]);
             }
         }
-
         WorkspaceUser::deleteAll(['id_workspace_user' => $deletebleWorkspaceUsers]);
         Yii::$app->session->addFlash('success', 'Users removed from role successfully.');
         return true;
@@ -290,9 +276,9 @@ class AssignmentController extends WebController
 
         $workspaceUsers = WorkspaceUser::find(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->groupBy('id_workspace_user')->all();
         if ($workspaceUsers) {
-            // $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
-            // $workspaceUser->save();
             foreach ($workspaceUsers as $workspaceUser) {
+                if ($workspaceUser->status == WorkspaceUser::STATUS_INACTIVE)
+                    continue;
                 $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
                 $workspaceUser->save();
             }

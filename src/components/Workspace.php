@@ -103,7 +103,6 @@ class Workspace extends Component
     {
         $workspaceRoles = WorkspaceUser::find()
             ->where(['id_workspace' => Yii::$app->workspace->id, 'id_user' => Yii::$app->user->id, 'id_module' => $module])->groupBy('role')->all();
-
         if (!$workspaceRoles) {
             return false;
         }
@@ -159,5 +158,14 @@ class Workspace extends Component
             return true;
         }
         return false;
+    }
+
+    public function getJoinedWorkspaces()
+    {
+        $workspaces = WorkspaceUser::find()
+            ->where(['id_user' => Yii::$app->user->id])
+            ->groupBy('id_workspace')
+            ->all();
+        return $workspaces;
     }
 }

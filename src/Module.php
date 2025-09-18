@@ -11,13 +11,16 @@ class Module extends \portalium\base\Module
     const EVENT_USER_CREATE_AFTER = 'userCreateAfter';
 
     const EVENT_WORKSPACE_CREATE_AFTER = 'workspaceCreateAfter';
+    const EVENT_WORKSPACE_DELETE_BEFORE = 'workspaceDeleteBefore';
     
     public $apiRules = [
         [
             'class' => 'yii\rest\UrlRule',
             'controller' => [
                 'workspace/default',
-            ]
+                'workspace/user',
+            ],
+            'pluralize' => false,
         ],
     ];
     public static $tablePrefix = 'workspace_';
@@ -75,5 +78,6 @@ class Module extends \portalium\base\Module
         Event::on($this::className(), \portalium\rbac\Module::EVENT_ITEM_UPDATE, [new TriggerActions(), 'onRoleUpdateBefore']);
         Event::on($this::className(), \portalium\site\Module::EVENT_SETTING_UPDATE, [new TriggerActions(), 'onSettingUpdateAfter']);
         Event::on($this::className(), \portalium\user\Module::EVENT_USER_CREATE, [new TriggerActions(), 'onUserCreateAfter']);
+        Event::on($this::className(), \portalium\user\Module::EVENT_USER_DELETE_BEFORE, [new TriggerActions(), 'onUserDeleteBefore']);
     }
 }
