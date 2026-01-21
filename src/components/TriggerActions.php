@@ -100,6 +100,10 @@ class TriggerActions extends BaseObject
         $user = User::findOne($id_user);
         $workspaceModel = new Workspace();
         $workspaceModel->name = str_replace('_', '-', strtolower($user->username)) . '-workspace';
+        if (Workspace::find()->where(['name' => $workspaceModel->name])->exists()) {
+            $workspaceModel->name .= '-' . substr(Yii::$app->getSecurity()->generateRandomString(), 0, 3);
+        }
+        $workspaceModel->name = strtolower($workspaceModel->name);
         $workspaceModel->title = 'Home';
         $workspaceModel->id_user = $user->id_user;
         if (!$workspaceModel->save()) {

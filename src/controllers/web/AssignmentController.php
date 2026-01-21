@@ -282,8 +282,8 @@ class AssignmentController extends WebController
         if ($workspaceUser) {
             $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
             $workspaceUser->save();
+            Yii::$app->session->set('active_workspace_id', $workspaceUser->id_workspace);
         }
-        // return $this->goBack(Yii::$app->request->referrer);
 
         if (Yii::$app->request->referrer)
             return $this->redirect(Yii::$app->request->referrer);
@@ -291,7 +291,6 @@ class AssignmentController extends WebController
             return $this->redirect(['/']);
     }
 
-    //get-users
     public function actionGetUsers()
     {
         $id_workspace = Yii::$app->request->post('id_workspace');
