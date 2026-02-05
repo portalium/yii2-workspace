@@ -45,7 +45,7 @@ class DefaultController extends RestActiveController
         $workspaceUserModel = WorkspaceUser::findOne(['id_workspace_user' => $id, 'id_user' => Yii::$app->user->id]);
         if ($id == 0 || !$workspaceUserModel) {
             Yii::$app->session->addFlash('error', Module::t('You are not allowed to set this workspace.'));
-            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allossswed to access this page.'));
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
         if (!\Yii::$app->user->can('workspaceWebDefaultSetWorkspace', ['id_module' => 'workspace', 'model' => Workspace::findOne(['id_workspace' => $workspaceUserModel->id_workspace])])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
