@@ -40,7 +40,7 @@ class DefaultController extends RestActiveController
     }
 
     public function actionSetWorkspace(){
-        Yii::warning('Set workspace action called', 'workspace');
+
         $id = Yii::$app->request->post('id');
         $workspaceUserModel = WorkspaceUser::findOne(['id_workspace_user' => $id, 'id_user' => Yii::$app->user->id]);
         if ($id == 0 || !$workspaceUserModel) {

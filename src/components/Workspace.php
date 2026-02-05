@@ -67,6 +67,17 @@ class Workspace extends Component
             ->andWhere(['status' => WorkspaceUser::STATUS_ACTIVE])
             ->one();
         if ($workspace) {
+            if (Yii::$app->session->get('active_workspace_id', null) != null) {
+                $activeWorkspaceId = Yii::$app->session->get('active_workspace_id', null);
+                $sessionWorkspace = WorkspaceUser::find()
+                    ->where(['id_user' => Yii::$app->user->id])
+                    ->andWhere(['id_workspace' => $activeWorkspaceId])
+                    ->one();
+                if ($sessionWorkspace) {
+                    return $sessionWorkspace->id_workspace;
+                }
+            }
+            Yii::$app->session->set('active_workspace_id', $workspace->id_workspace);
             return $workspace->id_workspace;
         }
         $workspace = WorkspaceUser::find()
@@ -74,6 +85,7 @@ class Workspace extends Component
             ->one();
         if ($workspace) {
             $workspace->status = WorkspaceUser::STATUS_ACTIVE;
+            Yii::$app->session->set('active_workspace_id', $workspace->id_workspace);
             if ($workspace->save())
                 return $workspace->id_workspace;
         }
