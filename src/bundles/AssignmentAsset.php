@@ -17,7 +17,8 @@ class AssignmentAsset extends AssetBundle
     ];
 
     public $jsOptions = [
-        'position' => \yii\web\View::POS_END
+        'position' => \yii\web\View::POS_END,
+        'appendTimestamp' => true,
     ];
 
     public function init()

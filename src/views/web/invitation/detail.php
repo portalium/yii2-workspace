@@ -40,7 +40,7 @@ $this->registerCss(
             'dataProvider' => $dataProvider,
             // 'filterModel' => $searchModel,
             'columns' => [
-                ['class' => 'yii\grid\SerialColumn'],
+                ['class' => 'portalium\grid\SerialColumn'],
                 'email',
                 [
                     'attribute' => 'status',
@@ -52,7 +52,7 @@ $this->registerCss(
                     'filter' => InvitationRole::getStatusList()
                 ],
                 [
-                    'class' => ActionColumn::className(),
+                    'class' => ActionColumn::className(), 'header' => Module::t('Actions'),
                     'urlCreator' => function ($action, InvitationRole $model, $key, $index, $column) {
                         return Url::toRoute([$action, 'id' => $model->id_invitation]);
                     },
@@ -62,13 +62,22 @@ $this->registerCss(
                             return Html::a(
                                 Html::tag('i', '', ['class' => 'fa fa-refresh']),
                                 ['resend', 'id' => $model->id_invitation],
-                                ['class' => 'btn btn-primary btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;', 'data-confirm' => Module::t('Are you sure resend this invitation?')]
+                                ['class' => 'btn btn-primary btn-xs', 'title' => Module::t('Refresh'), 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;', 'data-confirm' => Module::t('Are you sure resend this invitation?')]
                             );
                         },
                         'delete' => function ($url, $model, $key) {
-                            return Html::button(
+                            return Html::a(
                                 Html::tag('i', '', ['class' => 'fa fa-trash']),
-                                ['class' => 'btn btn-danger btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;', 'onclick' => 'deleteInvitation(' . $model->id_invitation . ')']
+                                ['delete', 'id' => $model->id_invitation],
+                                [
+                                    'class' => 'btn btn-danger btn-xs',
+                                    'title' => Module::t('Delete'),
+                                    'style' => 'padding: 2px 9px 2px 9px; display: inline-block;',
+                                    'data' => [
+                                        'confirm' => Module::t('Are you sure you want to delete this invitation?'),
+                                        'method' => 'post',
+                                    ],
+                                ]
                             );
                         },
                     ],

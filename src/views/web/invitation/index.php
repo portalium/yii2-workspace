@@ -107,7 +107,7 @@ $this->registerCss(
                 'id' => 'invitation-modal'
             ],
             'title' => Module::t('Send Invitation'),
-            'footer' => Html::submitButton(Module::t('Add'), ['class' => 'btn btn-primary', 'id' => 'send-invitation-form'])
+            'footer' => Html::submitButton(Module::t('Submit'), ['class' => 'btn btn-primary', 'id' => 'send-invitation-form'])
         ]);
         echo $this->render('_invitation', ['model' => $invitationModel, 'form' => $formInvitation, 'moduleArray' => $moduleArray, 'dynamicModuleModel' => $dynamicModuleModel, 'availableRoles' => $availableRoles, 'usersEmail' => $usersEmail]);
         Modal::end();
@@ -118,7 +118,7 @@ $this->registerCss(
             'title' => Html::encode($this->title),
             'actions' => [
                 'header' => [
-                    Html::a(Module::t(''), ['#'], ['class' => 'fa fa-plus btn btn-success', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#invitation-modal']),
+                    Html::a('', ['#'], ['class' => 'fa fa-plus btn btn-success', 'title' => Module::t('Create'), 'data-bs-toggle' => 'modal', 'data-bs-target' => '#invitation-modal']),
                 ]
             ]
         ]) ?>
@@ -128,7 +128,7 @@ $this->registerCss(
             'dataProvider' => $invitationDataProvider,
             'filterModel' => $invitationSearchModel,
             'columns' => [
-                ['class' => 'yii\grid\SerialColumn'],
+                ['class' => 'portalium\grid\SerialColumn'],
                 [
                     'attribute' => 'invitation_token',
                     'label' => Module::t('Invitation Url'),
@@ -143,7 +143,7 @@ $this->registerCss(
                 ],
                 'date_expire',
                 [
-                    'class' => ActionColumn::className(),
+                    'class' => ActionColumn::className(), 'header' => Module::t('Actions'),
                     'urlCreator' => function ($action, Invitation $model, $key, $index, $column) {
                         return Url::toRoute([$action, 'id' => $model->id_invitation]);
                     },
@@ -153,14 +153,14 @@ $this->registerCss(
                             return Html::a(
                                 Html::tag('i', '', ['class' => 'fa fa-eye']),
                                 ['detail', 'id' => $model->id_invitation],
-                                ['class' => 'btn btn-primary btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
+                                ['class' => 'btn btn-primary btn-xs', 'title' => Module::t('View'), 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
                             );
                         },
                         'update' => function ($url, $model, $key) {
                             return Html::a(
                                 Html::tag('i', '', ['class' => 'fa fa-pencil']),
                                 ['update', 'id' => $model->id_invitation],
-                                ['class' => 'btn btn-primary btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
+                                ['class' => 'btn btn-primary btn-xs', 'title' => Module::t('Update'), 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
                             );
                         },
                     ],
@@ -177,75 +177,3 @@ $this->registerCss(
 <div id="dialog-confirm" title="Delete Invitation" style="display: none;">
     <div><?= Module::t('Are you sure delete this invitation?') ?></div>
 </div>
-<?php
-$this->registerJs(
-    <<<JS
-    $(document).ready(function(){
-        $('#send-invitation-form').on('click', function(e){
-            // '<div class="snippet"><div class="dot-typing"></div></div>'
-            e.target.innerHTML = '<div class="snippet"><div class="dot-typing"></div></div>';
-        });
-
-        // if delete button clicked then show confirm modal and choose all and single and cancel
-        window.deleteInvitation = function(id){
-            $('#dialog-confirm').dialog({
-                resizable: false,
-                closeOnEscape: false,
-                draggable: false,
-                height: "auto",
-                width: 400,
-                modal: true,
-                buttons: [
-                    {
-                        text: "Delete",
-                        class: "btn btn-danger",
-                        click: function() {
-                            $.ajax({
-                                url: '/workspace/invitation/delete?id='+id,
-                                type: 'post',
-                                data: {
-                                    '_csrf-web': yii.getCsrfToken()
-                                },
-                                success: function(data) {
-                                    // page refresh
-                                    window.location.reload();
-                                }
-                            });
-                            $( this ).dialog( "close" );
-                        }
-                    },
-                    {
-                        text: "Delete All",
-                        class: "btn btn-danger",
-                        click: function() {
-                            $.ajax({
-                                url: '/workspace/invitation/delete?id='+id+'&all=true',
-                                type: 'post',
-                                data: {
-                                    '_csrf-web': yii.getCsrfToken()
-                                },
-                                success: function(data) {
-                                    // page refresh
-                                    window.location.reload();
-                                }
-                            });
-                            $( this ).dialog( "close" );
-                        }
-                    },
-                    {
-                        text: "Cancel",
-                        class: "btn btn-warning",
-                        click: function() {
-                            $( this ).dialog( "close" );
-                        }
-                    }
-                ]
-                
-            });
-        }
-
-        
-    });
-JS
-);
-?>

@@ -77,6 +77,10 @@ class Workspace extends \yii\db\ActiveRecord
             \Yii::$app->trigger(Module::EVENT_WORKSPACE_CREATE_AFTER, new Event(['payload' => $event->data]));
             Event::trigger(Yii::$app->getModules(), Module::EVENT_WORKSPACE_CREATE_AFTER, new Event(['payload' => $event->data]));
         }, $this);
+        $this->on(self::EVENT_BEFORE_DELETE, function ($event) {
+            \Yii::$app->trigger(Module::EVENT_WORKSPACE_DELETE_BEFORE, new Event(['payload' => $event->data]));
+            Event::trigger(Yii::$app->getModules(), Module::EVENT_WORKSPACE_DELETE_BEFORE, new Event(['payload' => $event->data]));
+        }, $this);
     }
 
     /**
@@ -138,6 +142,7 @@ class Workspace extends \yii\db\ActiveRecord
         $name = strtolower($name);
         $name = trim($name, '-');
         $name = preg_replace('/-+/', '-', $name);
+        $name = str_replace('_', '-', $name);
         if (Workspace::find()->where(['name' => $name, 'id_user' => $this->id_user])->exists()) {
             $name = $name . '-' . Yii::$app->security->generateRandomString(5);
         }

@@ -48,6 +48,9 @@ class Workspace extends Widget
         $orgItems = [];
 
         $activeWorkspace = WorkspaceUser::find()->where(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->one();
+        if (Yii::$app->session->get('active_workspace_id', null) !== null) {
+            $activeWorkspace = WorkspaceUser::find()->where(['id_workspace' => Yii::$app->session->get('active_workspace_id'), 'id_user' => Yii::$app->user->id])->one();
+        }
         foreach ($workspaces as $key => $value) {
             $orgItems[] = [
                 'label' => Module::t($value->workspace->title) . (isset($value->workspace->name) ? (' (' . $value->workspace->name . ')') : ''),

@@ -22,7 +22,7 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="workspace-index">
 
     <?php
-    $actions[] = Html::a(Module::t(''), ['create'], ['class' => 'btn btn-success fa fa-plus', 'id' => 'create-workspace']);
+    $actions[] = Html::a('', ['create'], ['class' => 'btn btn-success fa fa-plus', 'id' => 'create-workspace', 'title' => Module::t('Create')]);
     Panel::begin(['title' => Module::t('Workspace'), 'actions' => $actions]);
     ?>
 
@@ -30,11 +30,11 @@ $this->params['breadcrumbs'][] = $this->title;
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
+            ['class' => 'portalium\grid\SerialColumn'],
             'name',
             'user.username',
             [
-                'class' => ActionColumn::className(),
+                'class' => ActionColumn::className(), 'header' => Module::t('Actions'),
                 'urlCreator' => function ($action, Workspace $model, $key, $index, $column) {
                     return Url::toRoute([$action, 'id' => $model->id_workspace]);
                 },
@@ -42,7 +42,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'buttons' => [
                     'assign' => function ($url, $model) {
                         return Html::a(
-                            Html::tag('i', '', ['class' => 'fa fa-thin fa-user']),
+                            Html::tag('i', '', ['class' => 'fa fa-user text-warning']),
                             ['/workspace/assignment/assignment', 'id' => $model->id_workspace],
                             ['title' => Module::t('Assign'), 'class' => 'btn btn-warning btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
                         );
@@ -61,5 +61,4 @@ $this->params['breadcrumbs'][] = $this->title;
     ]); ?>
 
     <?php Panel::end(); ?>
-
 </div>
