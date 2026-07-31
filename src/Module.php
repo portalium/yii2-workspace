@@ -17,10 +17,61 @@ class Module extends \portalium\base\Module
         [
             'class' => 'yii\rest\UrlRule',
             'controller' => [
-                'workspace/default',
                 'workspace/user',
             ],
             'pluralize' => false,
+        ],
+        [
+            'class' => 'yii\rest\UrlRule',
+            'controller' => [
+                'workspace/invitation',
+            ],
+            'pluralize' => false,
+
+            'extraPatterns' => [
+                'POST resend/{id}' => 'resend',
+                'GET,POST accept' => 'accept',
+            ],
+        ],
+        [
+            'class' => 'yii\rest\UrlRule',
+            'controller' => [
+                'workspace/default',
+            ],
+            'pluralize' => false,
+
+            'extraPatterns' => [
+                'POST set-workspace' => 'set-workspace',
+                'POST set_workspace' => 'set-workspace',
+                'POST setWorkspace' => 'set-workspace',
+
+                'GET manage' => 'manage',
+            ],
+        ],
+        [
+            'class' => 'yii\rest\UrlRule',
+            'controller' => [
+                'workspace/assignment',
+            ],
+            'pluralize' => false,
+            'extraPatterns' => [
+
+                'GET assignment/<id:\d+>' => 'assignment',
+                'POST assign' => 'assign',
+                'POST assign-update' => 'assign-update',
+                'POST assign_update' => 'assign-update',
+                'POST assignUpdate' => 'assign-update',
+                'POST remove' => 'remove',
+                'GET assigned-users/<id:\d+>' => 'assigned-users',
+                'GET assigned_users/<id:\d+>' => 'assigned-users',
+                'GET assignedUsers/<id:\d+>' => 'assigned-users',
+                'GET get-roles' => 'get-roles',
+                'GET get_roles' => 'get-roles',
+                'GET getRoles' => 'get-roles',
+                'POST get-role-by-module' => 'get-role-by-module',
+                'POST get_role_by_module' => 'get-role-by-module',
+                'POST getRoleByModule' => 'get-role-by-module',
+            ],
         ],
     ];
     public static $tablePrefix = 'workspace_';
