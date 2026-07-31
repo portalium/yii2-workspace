@@ -174,10 +174,13 @@ class Workspace extends Component
 
     public function getJoinedWorkspaces()
     {
-        $workspaces = WorkspaceUser::find()
-            ->where(['id_user' => Yii::$app->user->id])
-            ->groupBy('id_workspace')
-            ->all();
-        return $workspaces;
+        $roles = WorkspaceUser::find()
+        ->where(['id_user' => Yii::$app->user->id])
+        ->groupBy('id_workspace')
+        ->with('workspace')
+        ->all();
+        
+        return $roles;
+        
     }
 }
