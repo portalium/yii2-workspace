@@ -62,7 +62,7 @@ class InvitationController extends RestActiveController
      *   - id_workspace (int, required)
      *   - date_expire (string, required)
      *   - usernames (array, required)
-     *   - modules (array, required) e.g., {"printer": "admin"}
+     *   - modules (array, required) e.g., {"printer": {"admin","user"}}
      */
     public function actionCreate()
     {
@@ -298,23 +298,26 @@ class InvitationController extends RestActiveController
 
                 //throw new NotFoundHttpException(Module::t('User not found: {username}', ['username' => $username]));
             }
-            foreach ($modules as $key => $value) {
-                if ($value == 'none' || $value == null || $value == '' || Yii::$app->workspace->isAvailableRole($key, $value) == false) {
-                    continue;
-                }
-                $invitationRoleModel = new InvitationRole();
-                $invitationRoleModel->id_workspace = $invitationModel->id_workspace;
-                $invitationRoleModel->id_invitation = $invitationModel->id_invitation;
-                $invitationRoleModel->email = $user->email;
-                $invitationRoleModel->module = $key;
-                $invitationRoleModel->role = $value;
-                $invitationRoleModel->status = InvitationRole::STATUS_PENDING;
+            foreach ($modules as $id_module => $roles)
+            {
+                foreach ($roles as $value)
+                {
+                    if ($value == 'none' || $value == null || $value == '' || Yii::$app->workspace->isAvailableRole($id_module, $value) == false) {
+                        continue;
+                    }
+                    $invitationRoleModel = new InvitationRole();
+                    $invitationRoleModel->id_workspace = $invitationModel->id_workspace;
+                    $invitationRoleModel->id_invitation = $invitationModel->id_invitation;
+                    $invitationRoleModel->email = $user->email;
+                    $invitationRoleModel->module = $id_module;
+                    $invitationRoleModel->role = $value;
+                    $invitationRoleModel->status = InvitationRole::STATUS_PENDING;
 
-                if ($invitationRoleModel->validate() && $invitationRoleModel->save()) {
-                    $invitationRoleModel->sendInvitation();
-                } else {
+                    if ($invitationRoleModel->validate() && $invitationRoleModel->save()) {
+                        $invitationRoleModel->sendInvitation();
+                    } else {
+                    }
                 }
-            }
         }
         Yii::$app->session->addFlash('success', Module::t('Invitation sent successfully.'));
     }
