@@ -318,6 +318,7 @@ class InvitationController extends RestActiveController
                     } else {
                     }
                 }
+            }
         }
         Yii::$app->session->addFlash('success', Module::t('Invitation sent successfully.'));
     }
