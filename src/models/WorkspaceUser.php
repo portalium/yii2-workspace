@@ -122,7 +122,7 @@ class WorkspaceUser extends \yii\db\ActiveRecord
     {
         $query = parent::find();
 
-        $query->groupBy('id_workspace');
+        //$query->groupBy('id_workspace');
         return $query;
     }
 }

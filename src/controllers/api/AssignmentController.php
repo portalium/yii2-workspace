@@ -180,7 +180,7 @@ class AssignmentController extends RestActiveController
     }
 
     /**
-     * POST /workspace/assignment/assign-update
+     * PUT /workspace/assignment/assign-update
      *
      * Updates role assignments for existing workspace users.
      *
@@ -190,7 +190,7 @@ class AssignmentController extends RestActiveController
      */
     public function actionAssignUpdate()
     {
-        $id_workspace = Yii::$app->request->post('id_workspace');
+        $id_workspace = Yii::$app->request->put('id_workspace');
         $workspace = $this->findModel($id_workspace);
 
         if (!(Yii::$app->user->can('workspaceApiAssignmentAssignUpdate', ['id_module' => 'workspace', 'model' => $workspace]) ||
@@ -198,9 +198,9 @@ class AssignmentController extends RestActiveController
             throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
-        $role = Yii::$app->request->post('role');
-        $ids = Yii::$app->request->post('id_workspace_user');
-        $id_module = Yii::$app->request->post('id_module');
+        $role = Yii::$app->request->put('role');
+        $ids = Yii::$app->request->put('id_workspace_user');
+        $id_module = Yii::$app->request->put('id_module');
 
         if (!$role || !$id_module || !is_array($ids) || empty($ids)) {
             throw new BadRequestHttpException(
@@ -356,7 +356,9 @@ class AssignmentController extends RestActiveController
      * GET /workspace/assignment/get-roles
      *
      * Returns the roles assigned to a user in a worspace
-     *
+     * 
+     * @param int id_user
+     * @param int id_workspace
      * @return ArrayDataProvider
      */
     public function actionGetRoles()
@@ -375,7 +377,7 @@ class AssignmentController extends RestActiveController
         $roles = WorkspaceUser::find()
             ->select(['role', 'status', 'id_module'])
             ->andWhere(['id_user' => $id_user, 'id_workspace' => $id_workspace])
-            ->groupBy('id_module')
+            //->groupBy('id_module')
             ->asArray()
             ->all();
 
