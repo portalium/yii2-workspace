@@ -176,7 +176,6 @@ class Workspace extends Component
     {
         $roles = WorkspaceUser::find()
         ->where(['id_user' => Yii::$app->user->id])
-        ->groupBy('id_workspace')
         ->with('workspace')
         ->all();
         
