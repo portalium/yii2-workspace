@@ -374,7 +374,7 @@ class AssignmentController extends RestActiveController
             throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
-        $roles = WorkspaceUser::find()
+        $roles = WorkspaceUser::findNoGroupBy()
             ->select(['role', 'status', 'id_module'])
             ->andWhere(['id_user' => $id_user, 'id_workspace' => $id_workspace])
             //->groupBy('id_module')
