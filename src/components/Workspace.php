@@ -182,4 +182,19 @@ class Workspace extends Component
         return $roles;
         
     }
+
+    public function isMember($id_workspace, $id_user = null)
+    {
+        if ($id_user === null) {
+            $id_user = Yii::$app->user->id;
+        }
+
+        $workspaceUser = WorkspaceUser::find()
+            ->where(['id_user' => $id_user, 'id_workspace' => $id_workspace])
+            ->one();
+        if ($workspaceUser) {
+            return true;
+        }
+        return false;
+    }
 }

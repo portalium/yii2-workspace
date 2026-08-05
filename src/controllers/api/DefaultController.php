@@ -217,7 +217,8 @@ class DefaultController extends RestActiveController
         }
 
         if (!(Yii::$app->user->can('workspaceApiDefaultSetWorkspace', ['id_module' => 'workspace', 'model' => $workspace]) ||
-              (Yii::$app->user->can('workspaceApiDefaultSetWorkspaceOwn', ['id_module' => 'workspace', 'model' => $workspace]) && $workspace->id_user == Yii::$app->user->id))) {
+              (Yii::$app->user->can('workspaceApiDefaultSetWorkspaceOwn', ['id_module' => 'workspace', 'model' => $workspace]) && Yii::$app->workspace->isMember($workspace->id_workspace))))
+        {
             throw new ForbiddenHttpException(Module::t('You are not allowed to set this workspace.'));
         }
 
