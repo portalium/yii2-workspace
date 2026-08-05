@@ -221,7 +221,7 @@ class DefaultController extends RestActiveController
             throw new ForbiddenHttpException(Module::t('You are not allowed to set this workspace.'));
         }
 
-        $activeMemberships = WorkspaceUser::find()
+        $activeMemberships = WorkspaceUser::findNoGroupBy()
             ->where(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])
             ->all();
 

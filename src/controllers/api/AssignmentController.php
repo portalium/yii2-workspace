@@ -335,8 +335,9 @@ class AssignmentController extends RestActiveController
         }
  
         return new ArrayDataProvider([
-            'allModels' => WorkspaceUser::find()
-            ->select([UserModule::$tablePrefix . 'user.id_user', Module::$tablePrefix . 'workspace_user.id_workspace_user', 'username', Module::$tablePrefix . 'workspace_user.role', Module::$tablePrefix . 'workspace_user.id_module'])
+            'allModels' => WorkspaceUser::findNoGroupBy()
+            ->select([UserModule::$tablePrefix . 'user.id_user', Module::$tablePrefix . 'workspace_user.id_workspace_user', 
+            'username', Module::$tablePrefix . 'workspace_user.role', Module::$tablePrefix . 'workspace_user.id_module', 'id_avatar'])
             ->leftJoin(UserModule::$tablePrefix . 'user', UserModule::$tablePrefix . 'user.id_user = ' . Module::$tablePrefix . 'workspace_user.id_user')
             ->groupBy(Module::$tablePrefix . 'workspace_user.id_workspace_user')
             ->andWhere([Module::$tablePrefix . 'workspace_user.id_workspace' => $id])
