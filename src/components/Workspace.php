@@ -6,7 +6,7 @@ use portalium\base\Exception;
 use Yii;
 use yii\base\Component;
 use portalium\workspace\models\WorkspaceUser;
-use portalium\workspace\models\Workspace;
+use portalium\workspace\models\Workspace as WorkspaceModel;
 use portalium\workspace\Module;
 
 class Workspace extends Component
@@ -97,7 +97,7 @@ class Workspace extends Component
     {
         $id = $this->getId();
         if ($id) {
-            $workspace = Workspace::findOne($id);
+            $workspace = WorkspaceModel::findOne($id);
             if ($workspace) {
                 return $workspace->getUser();
             }
