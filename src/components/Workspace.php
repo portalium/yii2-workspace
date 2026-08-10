@@ -99,7 +99,7 @@ class Workspace extends Component
         if ($id) {
             $workspace = WorkspaceModel::findOne($id);
             if ($workspace) {
-                return $workspace->getUser();
+                return $workspace->id_user;
             }
         }
         return null;
