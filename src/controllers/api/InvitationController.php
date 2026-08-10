@@ -42,8 +42,8 @@ class InvitationController extends RestActiveController
             if ($idWorkspace)
             {
                 $workspace = $this->findWorkspace($idWorkspace);
-                if (!(Yii::$app->user->can('workspaceApiInvitationView', ['id_module' => 'workspace', 'model' => $workspace]) ||
-                (Yii::$app->user->can('workspaceApiInvitationViewOwn', ['id_module' => 'workspace', 'model' => $workspace]) && $workspace->id_user == Yii::$app->user->id))) 
+                if (!(Yii::$app->user->can('workspaceApiInvitationView') ||
+                (Yii::$app->user->can('workspaceApiInvitationViewOwn') && $workspace->id_user == Yii::$app->user->id))) 
                 {
                     throw new ForbiddenHttpException(Module::t('You are not allowed to access this workspace.'));
                 }
@@ -74,8 +74,9 @@ class InvitationController extends RestActiveController
         }
 
         $workspace = $this->findWorkspace($idWorkspace);
-        if (!(Yii::$app->user->can('workspaceApiInvitationCreate', ['id_module' => 'workspace', 'model' => $workspace]) ||
-        (Yii::$app->user->can('workspaceApiInvitationCreateOwn', ['id_module' => 'workspace', 'model' => $workspace]) && $workspace->id_user == Yii::$app->user->id)))
+        if (!(Yii::$app->user->can('workspaceApiInvitationCreate') ||
+        (Yii::$app->user->can('workspaceApiInvitationCreateOwn') && $workspace->id_user == Yii::$app->user->id) ||
+        (Yii::$app->workspace->can('workspace','workspaceApiInvitationCreate') && Yii::$app->workspace->id == $idWorkspace)))
         {
             throw new ForbiddenHttpException(Module::t('You are not allowed to create invitations for this workspace.'));
         }
@@ -125,8 +126,9 @@ class InvitationController extends RestActiveController
         $modelInvitation = $this->findModel($id);
         $workspace = $this->findWorkspace($modelInvitation->id_workspace);
 
-        if (!(Yii::$app->user->can('workspaceApiInvitationUpdate', ['id_module' => 'workspace', 'model' => $workspace]) ||
-        (Yii::$app->user->can('workspaceApiInvitationUpdateOwn', ['id_module' => 'workspace', 'model' => $workspace]) && $workspace->id_user == Yii::$app->user->id)))
+        if (!(Yii::$app->user->can('workspaceApiInvitationUpdate') ||
+        (Yii::$app->user->can('workspaceApiInvitationUpdateOwn') && $workspace->id_user == Yii::$app->user->id)||
+        (Yii::$app->workspace->can('workspace','workspaceApiInvitationUpdate') && Yii::$app->workspace->id == $workspace->id_workspace)))
         {
             throw new ForbiddenHttpException(Module::t('You are not allowed to update this invitation.'));
         }
@@ -163,8 +165,9 @@ class InvitationController extends RestActiveController
         $model = $this->findModel($id);
         $workspace = $this->findWorkspace($model->id_workspace);
 
-        if (!(Yii::$app->user->can('workspaceApiInvitationDelete', ['id_module' => 'workspace', 'model' => $workspace]) ||
-        (Yii::$app->user->can('workspaceApiInvitationDeleteOwn', ['id_module' => 'workspace', 'model' => $workspace]) && $workspace->id_user == Yii::$app->user->id)))
+        if (!(Yii::$app->user->can('workspaceApiInvitationDelete') ||
+        (Yii::$app->user->can('workspaceApiInvitationDeleteOwn') && $workspace->id_user == Yii::$app->user->id) ||
+        (Yii::$app->workspace->can('workspace','workspaceApiInvitationDelete') && Yii::$app->workspace->id == $workspace->id_workspace)))
         {
             throw new ForbiddenHttpException(Module::t('You are not allowed to delete invitations.'));
         }
@@ -197,8 +200,9 @@ class InvitationController extends RestActiveController
 
         $workspace = $this->findWorkspace($model->invitation->id_workspace);
         
-        if (!(Yii::$app->user->can('workspaceApiInvitationResend', ['id_module' => 'workspace', 'model' => $workspace]) || 
-        (Yii::$app->user->can('workspaceApiInvitationResendOwn', ['id_module' => 'workspace', 'model' => $workspace]) && $workspace->id_user == Yii::$app->user->id)))
+        if (!(Yii::$app->user->can('workspaceApiInvitationResend') || 
+        (Yii::$app->user->can('workspaceApiInvitationResendOwn') && $workspace->id_user == Yii::$app->user->id) ||
+        (Yii::$app->workspace->can('workspace','workspaceApiInvitationResend') && Yii::$app->workspace->id == $workspace->id_workspace)))
         {
             throw new ForbiddenHttpException(Module::t('You are not allowed to resend invitations.'));
         }

@@ -35,8 +35,8 @@ class DefaultController extends RestActiveController
         ];
 
         $actions['index']['prepareDataProvider'] = function ($action) use ($workspaceSearch) {
-            if (!Yii::$app->user->can('workspaceApiDefaultIndex', ['id_module' => 'workspace']) &&
-                !Yii::$app->user->can('workspaceApiDefaultIndexOwn', ['id_module' => 'workspace'])) {
+            if (!Yii::$app->user->can('workspaceApiDefaultIndex') &&
+                !Yii::$app->user->can('workspaceApiDefaultIndexOwn')) {
                 throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
             }
 
@@ -49,7 +49,10 @@ class DefaultController extends RestActiveController
                 }
             }
 
-            $dataProvider->query->andWhere([Module::$tablePrefix . 'workspace.id_user' => Yii::$app->user->id]);
+            if(!Yii::$app->user->can('workspaceApiDefaultIndex'))
+            {
+                $dataProvider->query->andWhere([Module::$tablePrefix . 'workspace.id_user' => Yii::$app->user->id]);
+            }
 
             return $dataProvider;
         };
@@ -101,8 +104,9 @@ class DefaultController extends RestActiveController
     {
         $model = $this->findModel($id);
 
-        if (!(Yii::$app->user->can('workspaceApiDefaultView', ['id_module' => 'workspace', 'model' => $model]) ||
-              (Yii::$app->user->can('workspaceApiDefaultViewOwn', ['id_module' => 'workspace', 'model' => $model]) && $model->id_user == Yii::$app->user->id))) {
+        if (!(Yii::$app->user->can('workspaceApiDefaultView') ||
+              (Yii::$app->user->can('workspaceApiDefaultViewOwn') && $model->id_user == Yii::$app->user->id) ||
+              (Yii::$app->user->can('workspaceApiDefaultView') && Yii::$app->workspace->id == $model->id_workspace))) {
             throw new ForbiddenHttpException(Module::t('You are not allowed to view this workspace.'));
         }
 
@@ -116,7 +120,7 @@ class DefaultController extends RestActiveController
      */
     public function actionCreate()
     {
-        if (!Yii::$app->user->can('workspaceApiDefaultCreateOwn', ['id_module' => 'workspace'])) {
+        if (!Yii::$app->user->can('workspaceApiDefaultCreateOwn')) {
             throw new ForbiddenHttpException(Module::t('You are not allowed to create workspaces.'));
         }
 
@@ -148,8 +152,9 @@ class DefaultController extends RestActiveController
     {
         $model = $this->findModel($id);
 
-        if (!(Yii::$app->user->can('workspaceApiDefaultUpdate', ['id_module' => 'workspace', 'model' => $model]) ||
-              (Yii::$app->user->can('workspaceApiDefaultUpdateOwn', ['id_module' => 'workspace', 'model' => $model]) && $model->id_user == Yii::$app->user->id))) {
+        if (!(Yii::$app->user->can('workspaceApiDefaultUpdate') ||
+              (Yii::$app->user->can('workspaceApiDefaultUpdateOwn') && $model->id_user == Yii::$app->user->id) ||
+              (Yii::$app->workspace->can('workspace', 'workspaceApiDefaultUpdate') && Yii::$app->workspace->id == $model->id_workspace))) {
             throw new ForbiddenHttpException(Module::t('You are not allowed to update this workspace.'));
         }
 
@@ -178,8 +183,8 @@ class DefaultController extends RestActiveController
     {
         $model = $this->findModel($id);
 
-        if (!(Yii::$app->user->can('workspaceApiDefaultDelete', ['id_module' => 'workspace', 'model' => $model]) ||
-              (Yii::$app->user->can('workspaceApiDefaultDeleteOwn', ['id_module' => 'workspace', 'model' => $model]) && $model->id_user == Yii::$app->user->id))) {
+        if (!(Yii::$app->user->can('workspaceApiDefaultDelete') ||
+              (Yii::$app->user->can('workspaceApiDefaultDeleteOwn') && $model->id_user == Yii::$app->user->id))) {
             throw new ForbiddenHttpException(Module::t('You are not allowed to delete this workspace.'));
         }
 
@@ -216,8 +221,8 @@ class DefaultController extends RestActiveController
             throw new NotFoundHttpException(Module::t('Workspace not found.'));
         }
 
-        if (!(Yii::$app->user->can('workspaceApiDefaultSetWorkspace', ['id_module' => 'workspace', 'model' => $workspace]) ||
-              (Yii::$app->user->can('workspaceApiDefaultSetWorkspaceOwn', ['id_module' => 'workspace', 'model' => $workspace]) && Yii::$app->workspace->isMember($workspace->id_workspace))))
+        if (!(Yii::$app->user->can('workspaceApiDefaultSetWorkspace') ||
+              (Yii::$app->user->can('workspaceApiDefaultSetWorkspaceOwn') && Yii::$app->workspace->isMember($workspace->id_workspace))))
         {
             throw new ForbiddenHttpException(Module::t('You are not allowed to set this workspace.'));
         }
