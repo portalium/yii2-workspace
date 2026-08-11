@@ -13,6 +13,7 @@ class Module extends \portalium\base\Module
     const EVENT_WORKSPACE_CREATE_AFTER = 'workspaceCreateAfter';
     const EVENT_WORKSPACE_DELETE_BEFORE = 'workspaceDeleteBefore';
     
+    public static $supportWorkspace = true;
     public $apiRules = [
         [
             'class' => 'yii\rest\UrlRule',
