@@ -49,6 +49,29 @@ class InvitationController extends RestActiveController
                 }
                 $dataProvider->query->andWhere(['id_workspace' => $idWorkspace]);
             }
+            else // if no workspace is given, return invitations sent to the current user
+            {
+                $userEmail = Yii::$app->user->identity->email;
+
+                if ($userEmail === null || $userEmail === '')
+                {
+                    throw new UnprocessableEntityHttpException(Module::t('Current user doesnt have a email'));
+                } 
+                else 
+                {
+                    $dataProvider->query->andWhere([
+                        'id_invitation' => InvitationRole::find()
+                            ->select('id_invitation')
+                            ->where(['email' => $userEmail])
+                    ]);
+                }
+            }
+            $dataProvider->pagination = [
+                'defaultPageSize' => 20,
+                'validatePage'    => false,
+                'pageSizeLimit' => [1,1000000]
+            ];
+
             return $dataProvider;
         };
 

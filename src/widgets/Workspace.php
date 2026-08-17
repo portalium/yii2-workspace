@@ -9,7 +9,7 @@ use portalium\workspace\Module;
 use portalium\theme\widgets\Nav;
 use portalium\menu\models\MenuItem;
 use portalium\workspace\models\WorkspaceUser;
-use portalium\workspace\models\Workspace as ModelsWorkspace;
+use portalium\workspace\models\Workspace as WorkspaceModel;
 
 class Workspace extends Widget
 {
@@ -42,7 +42,7 @@ class Workspace extends Widget
 
         $query = WorkspaceUser::find();
         // if(!Yii::$app->user->can('workspaceWorkspaceFullAccess')){
-        $query->where(['id_user' => Yii::$app->user->id]);
+        $query->where(['id_user' => Yii::$app->user->id, 'is_virtual' => WorkspaceModel::IS_VIRTUAL_FALSE]);
         // }
         $workspaces = $query->all();
         $orgItems = [];
