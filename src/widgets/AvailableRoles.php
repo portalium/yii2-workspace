@@ -11,7 +11,7 @@ use portalium\theme\widgets\Tabs;
 class AvailableRoles extends InputWidget
 {
     public $settingIndex = 0;
-    public function init()
+    public function init(): void
     {
         parent::init();
     }

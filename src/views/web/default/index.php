@@ -22,7 +22,9 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="workspace-index">
 
     <?php
-    $actions[] = Html::a('', ['create'], ['class' => 'btn btn-success fa fa-plus', 'id' => 'create-workspace', 'title' => Module::t('Create')]);
+    $actions[] = Html::button(Module::t(''), ['class' => 'fa fa-trash btn btn-danger', 'id' => 'delete-select', 'type' => 'button']);
+    $actions[] = Html::a(Module::t(''), ['create-virtual'], ['class' => 'btn btn-warning fa fa-user-secret', 'id' => 'create-virtual-workspace', 'title' => Module::t('Create Virtual Workspace')]);
+    $actions[] = Html::a(Module::t(''), ['create'], ['class' => 'btn btn-success fa fa-plus', 'id' => 'create-workspace']);
     Panel::begin(['title' => Module::t('Workspace'), 'actions' => $actions]);
     ?>
 
@@ -30,11 +32,23 @@ $this->params['breadcrumbs'][] = $this->title;
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'columns' => [
+            ['class' => 'portalium\grid\CheckboxColumn'],
             ['class' => 'portalium\grid\SerialColumn'],
             'name',
             'user.username',
             [
-                'class' => ActionColumn::className(), 'header' => Module::t('Actions'),
+                'attribute' => 'is_virtual',
+                'format' => 'raw',
+                'value' => function ($model) {
+                    return $model->is_virtual == Workspace::IS_VIRTUAL_TRUE
+                        ? '<span class="badge bg-warning">' . Module::t('Virtual') . '</span>'
+                        : '<span class="badge bg-secondary">' . Module::t('Real') . '</span>';
+                },
+                'filter' => Workspace::getIsVirtualList(),
+                'label' => Module::t('Type'),
+            ],
+            [
+                'class' => ActionColumn::className(),
                 'urlCreator' => function ($action, Workspace $model, $key, $index, $column) {
                     return Url::toRoute([$action, 'id' => $model->id_workspace]);
                 },
@@ -61,4 +75,26 @@ $this->params['breadcrumbs'][] = $this->title;
     ]); ?>
 
     <?php Panel::end(); ?>
+
 </div>
+<?php
+$currentUrl = Url::current();
+$csrfParam = \Yii::$app->request->csrfParam;
+$csrfToken = \Yii::$app->request->csrfToken;
+$confirmMsg = json_encode(Module::t('Are you sure you want to delete the selected workspaces?'));
+
+$js = <<< JS
+$('#delete-select').on('click', function () {
+    var ids = $('input[name="selection[]"]:checked').map(function () { return this.value; }).get();
+    if (ids.length === 0) { return; }
+    if (!confirm($confirmMsg)) { return; }
+    var \$form = $('<form>', { method: 'post', action: '$currentUrl' }).hide().appendTo('body');
+    \$form.append($('<input>', { type: 'hidden', name: '$csrfParam', value: '$csrfToken' }));
+    $.each(ids, function (i, v) {
+        \$form.append($('<input>', { type: 'hidden', name: 'selection[]', value: v }));
+    });
+    \$form.submit();
+});
+JS;
+$this->registerJs($js, \yii\web\View::POS_END);
+?>

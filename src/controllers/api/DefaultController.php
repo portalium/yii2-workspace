@@ -41,6 +41,11 @@ class DefaultController extends RestActiveController
             }
 
             $dataProvider = $workspaceSearch->search(Yii::$app->request->queryParams);
+          
+            if (Yii::$app->request->get('is_virtual') === null) 
+            {
+                $dataProvider->query->andWhere(['is_virtual' => Workspace::IS_VIRTUAL_FALSE]);
+            }
 
             if ($action->dataFilter !== null) {
                 $filter = $action->dataFilter->build();
@@ -206,14 +211,16 @@ class DefaultController extends RestActiveController
      */
     public function actionSetWorkspace()
     {
+        Yii::warning('Set workspace action called', 'workspace');
         $id = Yii::$app->request->post('id');
         if (!$id) {
             throw new BadRequestHttpException(Module::t('Missing workspace user ID.'));
         }
 
         $workspaceUserModel = WorkspaceUser::findOne(['id_workspace_user' => $id, 'id_user' => Yii::$app->user->id]);
-        if (!$workspaceUserModel) {
-            throw new ForbiddenHttpException(Module::t('You are not allowed to set this workspace.'));
+        if ($id == 0 || !$workspaceUserModel) {
+            Yii::$app->session->addFlash('error', Module::t('You are not allowed to set this workspace.'));
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allossswed to access this page.'));
         }
 
         $workspace = Workspace::findOne(['id_workspace' => $workspaceUserModel->id_workspace]);

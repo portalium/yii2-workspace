@@ -17,7 +17,7 @@ class WorkspaceSearch extends Workspace
     public function rules()
     {
         return [
-            [['id_workspace'], 'integer'],
+            [['id_workspace', 'is_virtual'], 'integer'],
             [['name', 'date_create', 'date_update'], 'safe'],
         ];
     }
@@ -50,6 +50,7 @@ class WorkspaceSearch extends Workspace
         // grid filtering conditions
         $query->andFilterWhere([
             'id_workspace' => $this->id_workspace,
+            'is_virtual' => $this->is_virtual,
             'date_create' => $this->date_create,
             'date_update' => $this->date_update,
         ]);

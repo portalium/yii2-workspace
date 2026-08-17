@@ -23,6 +23,9 @@ use portalium\user\models\User;
  */
 class Workspace extends \yii\db\ActiveRecord
 {
+    const IS_VIRTUAL_FALSE = 0;
+    const IS_VIRTUAL_TRUE = 1;
+
     /**
      * {@inheritdoc}
      *
@@ -49,6 +52,8 @@ class Workspace extends \yii\db\ActiveRecord
             [['name'], 'string', 'max' => 64],
             [['name'], 'unique'],
             [['name'], 'match', 'pattern' => '/^[a-z-0-9]+(?:-[a-z-0-9]+)*$/', 'message' => Module::t('Only word characters and dashes are allowed.')],
+            [['is_virtual'], 'default', 'value' => self::IS_VIRTUAL_FALSE],
+            [['is_virtual'], 'in', 'range' => [self::IS_VIRTUAL_FALSE, self::IS_VIRTUAL_TRUE]],
         ];
     }
 
@@ -97,6 +102,20 @@ class Workspace extends \yii\db\ActiveRecord
             'id_user' => Module::t('Id User'),
             'date_create' => Module::t('Date Create'),
             'date_update' => Module::t('Date Update'),
+            'is_virtual' => Module::t('Virtual'),
+        ];
+    }
+
+    /**
+     * Returns list of virtual/real labels for dropdowns and grid filters.
+     *
+     * @return array
+     */
+    public static function getIsVirtualList()
+    {
+        return [
+            self::IS_VIRTUAL_FALSE => Module::t('Real'),
+            self::IS_VIRTUAL_TRUE => Module::t('Virtual'),
         ];
     }
 
@@ -146,6 +165,7 @@ class Workspace extends \yii\db\ActiveRecord
         if (Workspace::find()->where(['name' => $name, 'id_user' => $this->id_user])->exists()) {
             $name = $name . '-' . Yii::$app->security->generateRandomString(5);
         }
+
         return $name;
     }
 
