@@ -23,8 +23,8 @@ use portalium\user\models\User;
  */
 class Workspace extends \yii\db\ActiveRecord
 {
-    const IS_VIRTUAL_FALSE = 0;
-    const IS_VIRTUAL_TRUE = 1;
+    public const IS_VIRTUAL_FALSE = 0;
+    public const IS_VIRTUAL_TRUE = 1;
 
     /**
      * {@inheritdoc}

@@ -42,7 +42,10 @@ class Workspace extends Widget
 
         $query = WorkspaceUser::find();
         // if(!Yii::$app->user->can('workspaceWorkspaceFullAccess')){
-        $query->where(['id_user' => Yii::$app->user->id, 'is_virtual' => WorkspaceModel::IS_VIRTUAL_FALSE]);
+        $query->where(['id_user' => Yii::$app->user->id])
+        ->andWhere(['id_workspace' => WorkspaceModel::find()
+        ->select('id_workspace')
+        ->where(['is_virtual' => WorkspaceModel::IS_VIRTUAL_FALSE])]);
         // }
         $workspaces = $query->all();
         $orgItems = [];
