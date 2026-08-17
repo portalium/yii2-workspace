@@ -7,6 +7,7 @@ use portalium\workspace\models\Workspace as ModelsWorkspace;
 use Yii;
 use yii\base\Component;
 use portalium\workspace\models\WorkspaceUser;
+use portalium\workspace\models\Workspace as WorkspaceModel;
 use portalium\workspace\Module;
 
 class Workspace extends Component
@@ -89,6 +90,18 @@ class Workspace extends Component
             Yii::$app->session->set('active_workspace_id', $workspace->id_workspace);
             if ($workspace->save())
                 return $workspace->id_workspace;
+        }
+        return null;
+    }
+
+    public function getId_user()
+    {
+        $id = $this->getId();
+        if ($id) {
+            $workspace = WorkspaceModel::findOne($id);
+            if ($workspace) {
+                return $workspace->id_user;
+            }
         }
         return null;
     }
@@ -179,15 +192,30 @@ class Workspace extends Component
             ->select('MAX(wu2.status)')
             ->from(WorkspaceUser::tableName() . ' wu2')
             ->where('wu2.id_user = wu.id_user AND wu2.id_workspace = wu.id_workspace');
-
         $workspaces = WorkspaceUser::find()
             ->alias('wu')
             ->where(['wu.id_user' => Yii::$app->user->id])
             ->andWhere(['wu.status' => $subQuery])
             ->groupBy('wu.id_workspace')
+            ->with('workspace')
             ->all();
-
         return $workspaces;
+        
+    }
+
+    public function isMember($id_workspace, $id_user = null)
+    {
+        if ($id_user === null) {
+            $id_user = Yii::$app->user->id;
+        }
+
+        $workspaceUser = WorkspaceUser::find()
+            ->where(['id_user' => $id_user, 'id_workspace' => $id_workspace])
+            ->one();
+        if ($workspaceUser) {
+            return true;
+        }
+        return false;
     }
 
     public function set($id_workspace)

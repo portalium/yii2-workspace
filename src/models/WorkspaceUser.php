@@ -125,4 +125,9 @@ class WorkspaceUser extends \yii\db\ActiveRecord
         $query->groupBy('id_workspace');
         return $query;
     }
+
+    public static function findNoGroupBy()
+    {
+        return parent::find();
+    }
 }
