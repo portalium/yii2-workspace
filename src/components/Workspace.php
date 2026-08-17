@@ -3,6 +3,7 @@
 namespace portalium\workspace\components;
 
 use portalium\base\Exception;
+use portalium\workspace\models\Workspace as ModelsWorkspace;
 use Yii;
 use yii\base\Component;
 use portalium\workspace\models\WorkspaceUser;
@@ -174,10 +175,47 @@ class Workspace extends Component
 
     public function getJoinedWorkspaces()
     {
+        $subQuery = (new \yii\db\Query())
+            ->select('MAX(wu2.status)')
+            ->from(WorkspaceUser::tableName() . ' wu2')
+            ->where('wu2.id_user = wu.id_user AND wu2.id_workspace = wu.id_workspace');
+
         $workspaces = WorkspaceUser::find()
-            ->where(['id_user' => Yii::$app->user->id])
-            ->groupBy('id_workspace')
+            ->alias('wu')
+            ->where(['wu.id_user' => Yii::$app->user->id])
+            ->andWhere(['wu.status' => $subQuery])
+            ->groupBy('wu.id_workspace')
             ->all();
+
         return $workspaces;
+    }
+
+    public function set($id_workspace)
+    {
+        $workspaceUserModel = WorkspaceUser::findOne(['id_workspace_user' => $id_workspace, 'id_user' => Yii::$app->user->id]);
+        if ($id_workspace == 0 || !$workspaceUserModel) {
+            Yii::$app->session->addFlash('error', Module::t('You are not allowed to set this workspace.'));
+            // throw new \yii\web\ForbiddenHttpException(Module::t('You are not allossswed to access this page.'));
+            return false;
+        }
+        if (!\Yii::$app->user->can('workspaceWebDefaultSetWorkspace', ['id_module' => 'workspace', 'model' => ModelsWorkspace::findOne(['id_workspace' => $workspaceUserModel->id_workspace])])) {
+            // throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
+            return false;
+        }
+
+        $workspaceUsers = WorkspaceUser::find(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->groupBy('id_workspace_user')->all();
+        if ($workspaceUsers) {
+            foreach ($workspaceUsers as $workspaceUser) {
+                $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
+                $workspaceUser->save();
+            }
+        }
+        $workspaceUser = WorkspaceUser::findOne(['id_workspace_user' => $id_workspace]);
+        if ($workspaceUser) {
+            $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
+            $workspaceUser->save();
+            return true;
+        }
+        return false;
     }
 }

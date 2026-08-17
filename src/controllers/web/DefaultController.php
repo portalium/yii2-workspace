@@ -40,6 +40,9 @@ class DefaultController extends WebController
         if (!\Yii::$app->user->can('workspaceWebDefaultIndex', ['id_module' => 'workspace']) && !\Yii::$app->user->can('workspaceWebDefaultIndexForWorkspace', ['id_module' => 'workspace'])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
+        if ($this->request->isPost) {
+            $this->actionMultipleDelete($this->request->post('selection'));
+        }
 
         $searchModel = new WorkspaceSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
@@ -61,6 +64,9 @@ class DefaultController extends WebController
     {
         if (!\Yii::$app->user->can('workspaceWorkspaceFullAccess')) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
+        }
+        if ($this->request->isPost) {
+            $this->actionMultipleDelete($this->request->post('selection'));
         }
 
         $searchModel = new WorkspaceSearch();
@@ -121,6 +127,40 @@ class DefaultController extends WebController
     }
 
     /**
+     * Creates a new virtual Workspace model.
+     * If creation is successful, the browser will be redirected to the 'view' page.
+     * @return string|\yii\web\Response
+     */
+    public function actionCreateVirtual()
+    {
+        if (!\Yii::$app->user->can('workspaceWebDefaultCreate', ['id_module' => 'workspace'])) {
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
+        }
+        $model = new Workspace();
+        $model->id_user = Yii::$app->user->id;
+        $model->is_virtual = Workspace::IS_VIRTUAL_TRUE;
+        if (!Yii::$app->workspace->checkSupportRoles()) {
+            Yii::$app->session->addFlash('error', Module::t('Please set default role for workspace module.'));
+
+            return $this->redirect(['index']);
+        }
+        if ($this->request->isPost) {
+            if ($model->load($this->request->post())) {
+                $model->id_user = Yii::$app->user->id;
+                $model->is_virtual = Workspace::IS_VIRTUAL_TRUE;
+                if ($model->save())
+                    return $this->redirect(['view', 'id' => $model->id_workspace]);
+            }
+        } else {
+            $model->loadDefaultValues();
+            $model->is_virtual = Workspace::IS_VIRTUAL_TRUE;
+        }
+        return $this->render('create-virtual', [
+            'model' => $model,
+        ]);
+    }
+
+    /**
      * Updates an existing Workspace model.
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param int $id Id Workspace
@@ -159,7 +199,15 @@ class DefaultController extends WebController
         if (!\Yii::$app->user->can('workspaceWebDefaultDelete', ['id_module' => 'workspace', 'model' => $this->findModel($id)])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
-        $this->findModel($id)->delete();
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            $this->findModel($id)->delete();
+            $transaction->commit();
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::warning($e->getMessage());
+            Yii::$app->session->setFlash('error', Module::t('Failed to delete the workspace. Please try again.'));
+        }
 
         return $this->redirect(['index']);
     }
@@ -178,5 +226,15 @@ class DefaultController extends WebController
         }
 
         throw new NotFoundHttpException(Module::t('The requested page does not exist.'));
+    }
+
+    protected function actionMultipleDelete($selectedItems)
+    {
+        if (!\Yii::$app->user->can('workspaceWebDefaultDelete', ['id_module' => 'workspace']))
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
+
+        Workspace::deleteAll(['id_workspace' => $selectedItems]);
+
+        return $this->redirect(['index']);
     }
 }

@@ -115,8 +115,12 @@ class Workspace extends Widget
     }
     .placementWidget[data-bs-placement="top-to-bottom"] li a i {
      display: block;
-     flex-direction: column; 
+     flex-direction: column;
      align-items: center;
+    }
+    .placementWidget .dropdown-menu {
+     max-height: 300px;
+     overflow-y: auto;
     }
     CSS;
         $this->getView()->registerCss($css);
