@@ -379,7 +379,7 @@ class AssignmentController extends RestActiveController
         $id_workspace = Yii::$app->request->get('id_workspace');
 
         $workspace = $this->findModel($id_workspace);
-        if (!(Yii::$app->user->can('workspaceApiAssignmentView') ||
+        if (!$id_user == Yii::$app->user->id && !(Yii::$app->user->can('workspaceApiAssignmentView') ||
             (Yii::$app->user->can('workspaceApiAssignmentViewOwn') && $workspace->id_user == Yii::$app->user->id) ||
             (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentView') && Yii::$app->workspace->id == $id_workspace)))
         {
