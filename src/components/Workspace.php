@@ -186,20 +186,25 @@ class Workspace extends Component
         return false;
     }
 
-    public function getJoinedWorkspaces()
+    public function getJoinedWorkspaces($isVirtual = WorkspaceModel::IS_VIRTUAL_FALSE)
     {
         $subQuery = (new \yii\db\Query())
             ->select('MAX(wu2.status)')
             ->from(WorkspaceUser::tableName() . ' wu2')
             ->where('wu2.id_user = wu.id_user AND wu2.id_workspace = wu.id_workspace');
-        $workspaces = WorkspaceUser::find()
+        $query = WorkspaceUser::find()
             ->alias('wu')
             ->where(['wu.id_user' => Yii::$app->user->id])
             ->andWhere(['wu.status' => $subQuery])
             ->groupBy('wu.id_workspace')
-            ->with('workspace')
-            ->all();
-        return $workspaces;
+            ->with('workspace');
+
+        if($isVirtual !== null) 
+        {
+            $query->joinWith(['workspace'])
+            ->andWhere([ModelsWorkspace::tableName() . '.is_virtual' => $isVirtual]);
+        }
+        return $query->all();
         
     }
 

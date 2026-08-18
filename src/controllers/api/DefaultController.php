@@ -72,7 +72,7 @@ class DefaultController extends RestActiveController
      */
     public function actionGetJoinedWorkspaces()
     {
-        return Yii::$app->workspace->getJoinedWorkspaces();
+        return Yii::$app->workspace->getJoinedWorkspaces(Workspace::IS_VIRTUAL_FALSE);
     }
 
     /**
