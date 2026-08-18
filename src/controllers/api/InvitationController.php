@@ -39,7 +39,7 @@ class InvitationController extends RestActiveController
             $dataProvider = $invitationSearch->search(Yii::$app->request->queryParams);
             
             $idWorkspace = Yii::$app->request->getQueryParam('id_workspace');
-            if ($idWorkspace)
+            if ($idWorkspace && is_numeric($idWorkspace) && $idWorkspace > 0)
             {
                 $workspace = $this->findWorkspace($idWorkspace);
                 if (!(Yii::$app->user->can('workspaceApiInvitationView') ||

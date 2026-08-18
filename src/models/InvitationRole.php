@@ -82,7 +82,7 @@ class InvitationRole extends \yii\db\ActiveRecord
         $user = User::findOne(['email' => $this->email]);
         
         if ($user){
-            $verifyLink = Yii::$app->urlManager->createAbsoluteUrl(['workspace/invitation/accept', 'token' => $this->invitation->invitation_token]);
+            $verifyLink = Yii::$app->request->hostInfo . '/workspace/invitation/accept?token=' . $this->invitation->invitation_token;
             Yii::$app->notification->addNotification($user->id_user, Module::t('You have been invited to join {workspace_name} workspace.', ['workspace_name' => $workspace->name]), '<a href="'.$verifyLink.'">Please click if accept invitation</a>');
         }
 
