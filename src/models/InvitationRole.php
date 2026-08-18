@@ -21,6 +21,7 @@ class InvitationRole extends \yii\db\ActiveRecord
 {
     const STATUS_PENDING = 0;
     const STATUS_ACCEPTED = 1;
+    const STATUS_REJECTED = 2;
 
     /**
      * {@inheritdoc}
@@ -106,11 +107,18 @@ class InvitationRole extends \yii\db\ActiveRecord
         $this->save();
     }
 
+    public function reject()
+    {
+        $this->status = self::STATUS_REJECTED;
+        $this->save();
+    }
+
     public static function getStatusList()
     {
         return [
             self::STATUS_PENDING => Module::t('Pending'),
             self::STATUS_ACCEPTED => Module::t('Accepted'),
+            self::STATUS_REJECTED => Module::t('Rejected'),
         ];
     }
 
@@ -128,5 +136,15 @@ class InvitationRole extends \yii\db\ActiveRecord
     public function getInvitation()
     {
         return $this->hasOne(Invitation::class, ['id_invitation' => 'id_invitation']);
+    }
+
+    /**
+     * Gets query for [[User]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUser()
+    {
+        return $this->hasOne(User::class, ['email' => 'email']);
     }
 }
