@@ -52,8 +52,7 @@ class AssignmentController extends RestActiveController
 
         if (!(Yii::$app->user->can('workspaceApiAssignmentView') ||
             (Yii::$app->user->can('workspaceApiAssignmentViewOwn') && $workspace->id_user == Yii::$app->user->id) ||
-            (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentView') && Yii::$app->workspace->id == $id)))
-        {
+            (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentView') && Yii::$app->workspace->id == $id))) {
             throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
         if (!Yii::$app->workspace->checkSupportRoles()) {
@@ -108,8 +107,7 @@ class AssignmentController extends RestActiveController
     {
         $id_workspace = Yii::$app->request->post('id_workspace');
 
-        if(!$id_workspace)
-        {
+        if (!$id_workspace) {
             throw new BadRequestHttpException(Module::t('Cant get id_workspace'));
         }
 
@@ -117,15 +115,13 @@ class AssignmentController extends RestActiveController
 
         if (!(Yii::$app->user->can('workspaceApiAssignmentAssign') ||
             (Yii::$app->user->can('workspaceApiAssignmentAssignOwn') && $workspace->id_user == Yii::$app->user->id) ||
-            (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentAssign') && Yii::$app->workspace->id == $id_workspace)))
-        {
+            (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentAssign') && Yii::$app->workspace->id == $id_workspace))) {
             throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
-        
+
         $id_users = Yii::$app->request->post('id_users');
 
-        if(!$id_users || empty($id_users))
-        {
+        if (!$id_users || empty($id_users)) {
             throw new BadRequestHttpException(Module::t('Cant get id_users[]'));
         }
 
@@ -133,13 +129,12 @@ class AssignmentController extends RestActiveController
         if (!$model->load(Yii::$app->request->getBodyParams(), '')) {
             throw new BadRequestHttpException(Module::t('Invalid payload provided.'));
         }
-        
+
         $model->id = $id_workspace;
 
         $model->selected_values = $id_users;
 
-        if(!$model->type || empty($model->type))
-        {
+        if (!$model->type || empty($model->type)) {
             $model->type = 'create';
         }
 
@@ -154,13 +149,13 @@ class AssignmentController extends RestActiveController
             return $this->actionAssignUpdate();
         }
 
-        foreach ($model->selected_values as $user)
-        {
+        foreach ($model->selected_values as $user) {
             $workspaceUser = WorkspaceUser::find()->where([
-            'id_workspace' => $model->id,
-            'id_user' => $user,
-            'id_module' => $model->id_module,
-            'role' => $model->role])->one();
+                'id_workspace' => $model->id,
+                'id_user' => $user,
+                'id_module' => $model->id_module,
+                'role' => $model->role
+            ])->one();
 
             if (!$workspaceUser) {
                 $workspaceUser = new WorkspaceUser();
@@ -197,10 +192,8 @@ class AssignmentController extends RestActiveController
         $id_workspace = Yii::$app->request->put('id_workspace');
         $workspace = $this->findModel($id_workspace);
 
-        if (!(Yii::$app->user->can('workspaceApiAssignmentAssignUpdate') ||
-            (Yii::$app->user->can('workspaceApiAssignmentAssignUpdateOwn') && $workspace->id_user == Yii::$app->user->id) ||
-            (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentAssignUpdate') && Yii::$app->workspace->id == $id_workspace)))
-        {
+        if (!(Yii::$app->user->can('workspaceApiAssignmentAssignUpdate', ['id_module' => 'workspace', 'model' => $workspace]) ||
+            (Yii::$app->user->can('workspaceApiAssignmentAssignUpdateOwn', ['id_module' => 'workspace', 'model' => $workspace]) && $workspace->id_user == Yii::$app->user->id))) {
             throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
@@ -217,11 +210,9 @@ class AssignmentController extends RestActiveController
         }
 
         $errors = [];
-        foreach ($ids as $id)
-        {
+        foreach ($ids as $id) {
             $workspaceUser = WorkspaceUser::find()->where(['id_workspace_user' => $id, 'id_workspace' => $id_workspace])->one();
-            if(!$workspaceUser)
-            {
+            if (!$workspaceUser) {
                 $errors[] = Module::t('couldnt find this assignment in this workspace: ' . $id);
                 continue;
             }
@@ -267,9 +258,7 @@ class AssignmentController extends RestActiveController
 
         if (!(Yii::$app->user->can('workspaceApiAssignmentRemove') ||
             (Yii::$app->user->can('workspaceApiAssignmentRemoveOwn') && $workspace->id_user == Yii::$app->user->id) ||
-            (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentRemove') && Yii::$app->workspace->id == $id_workspace)))
-        
-        {
+            (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentRemove') && Yii::$app->workspace->id == $id_workspace))) {
             throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
@@ -277,13 +266,12 @@ class AssignmentController extends RestActiveController
 
         $workspaceUsers = [];
 
-        foreach($workspaceUsersIds as $id)
-        {
+        foreach ($workspaceUsersIds as $id) {
             $workspaceUser = WorkspaceUser::find()->where(['id_workspace_user' => $id, 'id_workspace' => $id_workspace])->one();
             if ($workspaceUser) {
                 $workspaceUsers[] = $workspaceUser;
             }
-        } 
+        }
 
         $uniqueModule = [];
         foreach ($workspaceUsers as $workspaceUser) {
@@ -325,7 +313,7 @@ class AssignmentController extends RestActiveController
         return true;
     }
 
- 
+
     /**
      * GET /workspace/assignment/assigned-users/:id
      *
@@ -340,20 +328,25 @@ class AssignmentController extends RestActiveController
         $workspace = $this->findModel($id);
         if (!(Yii::$app->user->can('workspaceApiAssignmentView') ||
             (Yii::$app->user->can('workspaceApiAssignmentViewOwn') && $workspace->id_user == Yii::$app->user->id) ||
-            (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentView') && Yii::$app->workspace->id == $id)))
-        {
+            (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentView') && Yii::$app->workspace->id == $id))) {
             throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
- 
+
         return new ArrayDataProvider([
             'allModels' => WorkspaceUser::findNoGroupBy()
-            ->select([UserModule::$tablePrefix . 'user.id_user', Module::$tablePrefix . 'workspace_user.id_workspace_user', 
-            'username', Module::$tablePrefix . 'workspace_user.role', Module::$tablePrefix . 'workspace_user.id_module', 'id_avatar'])
-            ->leftJoin(UserModule::$tablePrefix . 'user', UserModule::$tablePrefix . 'user.id_user = ' . Module::$tablePrefix . 'workspace_user.id_user')
-            ->groupBy(Module::$tablePrefix . 'workspace_user.id_workspace_user')
-            ->andWhere([Module::$tablePrefix . 'workspace_user.id_workspace' => $id])
-            ->asArray()
-            ->all(),
+                ->select([
+                    UserModule::$tablePrefix . 'user.id_user',
+                    Module::$tablePrefix . 'workspace_user.id_workspace_user',
+                    'username',
+                    Module::$tablePrefix . 'workspace_user.role',
+                    Module::$tablePrefix . 'workspace_user.id_module',
+                    'id_avatar'
+                ])
+                ->leftJoin(UserModule::$tablePrefix . 'user', UserModule::$tablePrefix . 'user.id_user = ' . Module::$tablePrefix . 'workspace_user.id_user')
+                ->groupBy(Module::$tablePrefix . 'workspace_user.id_workspace_user')
+                ->andWhere([Module::$tablePrefix . 'workspace_user.id_workspace' => $id])
+                ->asArray()
+                ->all(),
             'pagination' => [
                 'defaultPageSize' => 10,
                 'validatePage' => false,
@@ -379,10 +372,9 @@ class AssignmentController extends RestActiveController
         $id_workspace = Yii::$app->request->get('id_workspace');
 
         $workspace = $this->findModel($id_workspace);
-        if (!$id_user == Yii::$app->user->id && !(Yii::$app->user->can('workspaceApiAssignmentView') ||
-            (Yii::$app->user->can('workspaceApiAssignmentViewOwn') && $workspace->id_user == Yii::$app->user->id) ||
-            (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentView') && Yii::$app->workspace->id == $id_workspace)))
-        {
+        if (!(Yii::$app->user->can('workspaceApiAssignmentView', ['id_module' => 'workspace', 'model' => $workspace]) ||
+            (Yii::$app->user->can('workspaceApiAssignmentViewOwn', ['id_module' => 'workspace', 'model' => $workspace]) &&
+                ($workspace->id_user == Yii::$app->user->id || $id_user == Yii::$app->user->id)))) {
             throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
@@ -416,11 +408,10 @@ class AssignmentController extends RestActiveController
     public function actionGetRoleByModule()
     {
         $moduleName = Yii::$app->request->get('id_module');
-        if (!$moduleName)
-        {
+        if (!$moduleName) {
             throw new BadRequestHttpException(Module::t('Missing required parameter: id_module.'));
         }
-        
+
         $availableRoles = Yii::$app->setting->getValue('workspace::available_roles');
         $availableRoles = $availableRoles[$moduleName] ?? [];
 
@@ -442,5 +433,4 @@ class AssignmentController extends RestActiveController
 
         throw new NotFoundHttpException(Module::t('The requested page does not exist.'));
     }
-
 }
