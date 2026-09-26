@@ -35,7 +35,7 @@ $this->params['breadcrumbs'][] = $this->title;
             ['class' => 'portalium\grid\CheckboxColumn'],
             ['class' => 'portalium\grid\SerialColumn'],
             'workspace.name',
-            'user.username',
+            'workspace.user.username',
             [
                 'attribute' => 'workspace.is_virtual',
                 'format' => 'raw',

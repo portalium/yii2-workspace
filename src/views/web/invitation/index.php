@@ -114,13 +114,29 @@ $this->registerCss(
         ActiveForm::end();
 
         ?>
-        <?php Panel::begin([
+        <?php
+        $headerActions = [];
+
+        if (\Yii::$app->user->can(
+            'workspaceWebDefaultCreateInvitation',
+            ['id_module' => 'workspace', 'model' => $model]
+        )) {
+            $headerActions[] = Html::a(
+                Module::t(''),
+                ['#'],
+                [
+                    'class' => 'fa fa-plus btn btn-success',
+                    'data-bs-toggle' => 'modal',
+                    'data-bs-target' => '#invitation-modal',
+                ]
+            );
+        }
+
+        Panel::begin([
             'title' => Html::encode($this->title),
             'actions' => [
-                'header' => [
-                    Html::a(Module::t(''), ['#'], ['class' => 'fa fa-plus btn btn-success', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#invitation-modal']),
-                ]
-            ]
+                'header' => $headerActions,
+            ],
         ]) ?>
 
         
