@@ -283,10 +283,12 @@ class InvitationController extends RestActiveController
     }
 
     /**
-     * POST|GET /invitations/accept?token=:token
+     * POST /invitations/accept
      */
-    public function actionAccept($token)
+    public function actionAccept()
     {
+        $token = Yii::$app->request->getBodyParam('token');
+
         if (empty($token)) {
             throw new BadRequestHttpException(Module::t('Token is required.'));
         }
@@ -374,7 +376,7 @@ class InvitationController extends RestActiveController
 
         $username = Yii::$app->request->post('username');
 
-        if($username != null) //for cancelling workspaces outgoing invitation
+        if($username != null || !empty($username)) //for cancelling workspaces outgoing invitation
         {
             if(!($invitation->id_workspace == Yii::$app->workspace->id && 
             ((Yii::$app->user->can('workspaceApiInvitationUpdateOwn') && Yii::$app->workspace->id_user == Yii::$app->user->id)||
@@ -392,9 +394,6 @@ class InvitationController extends RestActiveController
             $invitationRoles = InvitationRole::find()->where(['id_invitation' => $invitation->id_invitation,
             'email' => Yii::$app->user->identity->email])->all();
         }
-
-        $invitationRoles = InvitationRole::find()->where(['id_invitation' => $invitation->id_invitation,
-        'email' => Yii::$app->user->identity->email])->all();
 
         if (empty($invitationRoles)) {
             throw new UnprocessableEntityHttpException(Module::t('No invitation roles found for your email.'));

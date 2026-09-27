@@ -1,9 +1,9 @@
 <?php
 
 use kartik\select2\Select2;
+use kartik\date\DatePicker;
 use portalium\user\models\User;
 use portalium\workspace\Module;
-use yii\jui\DatePicker;
 
 $this->registerCss(
     <<<CSS
@@ -37,14 +37,9 @@ echo $form->field($model, 'emails')->widget(Select2::className(), [
     ],
 ]);
 
-echo $form->field($model, 'date_expire')->widget(DatePicker::classname(), [
-    'dateFormat' => 'yyyy-MM-dd',
-    'options' => ['class' => 'form-control', 'autocomplete' => 'off'],
-    'clientOptions' => [
-        'changeMonth' => true,
-        'changeYear' => true,
-        'yearRange' => Date('Y') . ':' . (Date('Y') + 10),
-    ],
+echo $form->field($model, 'date_expire')->input('date', [
+    'min' => date('Y-m-d'),
+    'max' => date('Y-m-d', strtotime('+10 years')),
 ]);
 
 ?>

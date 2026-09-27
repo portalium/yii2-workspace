@@ -186,7 +186,7 @@ class Workspace extends Component
         return false;
     }
 
-    public function getJoinedWorkspaces($isVirtual = WorkspaceModel::IS_VIRTUAL_FALSE)
+    public function getJoinedWorkspaces($isVirtual = WorkspaceModel::IS_VIRTUAL_FALSE, $returnQuery = false)
     {
         $subQuery = (new \yii\db\Query())
             ->select('MAX(wu2.status)')
@@ -204,7 +204,8 @@ class Workspace extends Component
             $query->joinWith(['workspace'])
             ->andWhere([ModelsWorkspace::tableName() . '.is_virtual' => $isVirtual]);
         }
-        return $query->all();
+
+        return $returnQuery ? $query : $query->all();
         
     }
 

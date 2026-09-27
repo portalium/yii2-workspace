@@ -24,7 +24,8 @@ class WorkspaceCheckRule extends Rule
         $module = $params['id_module'];
         if ($module == 'storage')
             $hasPermission = $this->checkAccess($activeWorkspaceId, $permission, $id_user, $module);
-        else {
+        else if($module == 'workspace')
+        {
             $hasPermission = $this->checkAccessWorkspace($activeWorkspaceId, $permission, $id_user, $module, $params);
         }
         return $hasPermission; // kullanıcının organizasyonda belirtilen izne sahip olup olmadığına göre true veya false döndür
@@ -64,7 +65,12 @@ class WorkspaceCheckRule extends Rule
             return false;
         }
         $model = $params['model'];
-        if ($model->id_user == $id_user) {
+        if ($model->id_user == $id_user)
+        {
+            return true;
+        }
+        if(Yii::$app->workspace->can('workspace',$permission))
+        {
             return true;
         }
 
