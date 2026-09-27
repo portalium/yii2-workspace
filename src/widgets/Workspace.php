@@ -9,7 +9,7 @@ use portalium\workspace\Module;
 use portalium\theme\widgets\Nav;
 use portalium\menu\models\MenuItem;
 use portalium\workspace\models\WorkspaceUser;
-use portalium\workspace\models\Workspace as ModelsWorkspace;
+use portalium\workspace\models\Workspace as WorkspaceModel;
 
 class Workspace extends Widget
 {
@@ -40,11 +40,7 @@ class Workspace extends Widget
     {
 
 
-        $query = WorkspaceUser::find();
-        // if(!Yii::$app->user->can('workspaceWorkspaceFullAccess')){
-        $query->where(['id_user' => Yii::$app->user->id]);
-        // }
-        $workspaces = $query->all();
+        $workspaces = Yii::$app->workspace->getJoinedWorkspaces(WorkspaceModel::IS_VIRTUAL_FALSE);
         $orgItems = [];
 
         $activeWorkspace = WorkspaceUser::find()->where(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->one();
@@ -115,8 +111,12 @@ class Workspace extends Widget
     }
     .placementWidget[data-bs-placement="top-to-bottom"] li a i {
      display: block;
-     flex-direction: column; 
+     flex-direction: column;
      align-items: center;
+    }
+    .placementWidget .dropdown-menu {
+     max-height: 300px;
+     overflow-y: auto;
     }
     CSS;
         $this->getView()->registerCss($css);

@@ -190,7 +190,6 @@ class InvitationController extends WebController
      */
     public function actionDelete($id, $all = false)
     {
-
         $model = Invitation::findOne($id);
         if (!$model || (!\Yii::$app->user->can('workspaceWebDefaultDeleteInvitation', ['id_module' => 'workspace', 'model' => $this->findWorkspace($model->id_workspace)]))) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
@@ -235,9 +234,12 @@ class InvitationController extends WebController
             Yii::$app->session->addFlash('error', Module::t('Invitation not accepted.'));
             return $this->redirect(['/']);
         }
-        $invitationRoles = InvitationRole::find()->where(['id_invitation' => $invitation->id_invitation])->all();
+        $invitationRoles = InvitationRole::find()->where(['id_invitation' => $invitation->id_invitation, 
+        'email' => Yii::$app->user->identity->email])->all();
+
         foreach ($invitationRoles as $invitationRole) {
-            if ($invitationRole && $invitationRole->invitation->date_expire > date('Y-m-d H:i:s') && $invitationRole->email == Yii::$app->user->identity->email) {
+            if ($invitationRole && $invitationRole->status == InvitationRole::STATUS_PENDING && $invitationRole->invitation->date_expire > date('Y-m-d H:i:s'))
+            {
                 $workspaceUser = WorkspaceUser::findOne([
                     'id_workspace' => $invitationRole->id_workspace,
                     'id_user' => Yii::$app->user->id,
@@ -247,8 +249,12 @@ class InvitationController extends WebController
                 if ($workspaceUser) {
                     $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
                     $workspaceUser->save();
-                } else {
-                    if (!Yii::$app->workspace->isAvailableRole($invitationRole->module, $invitationRole->role)) {
+                    $invitationRole->accept();
+                } 
+                else 
+                {
+                    if (!Yii::$app->workspace->isAvailableRole($invitationRole->module, $invitationRole->role))
+                    {
                         $hasError = true;
                         continue;
                     }
@@ -271,6 +277,43 @@ class InvitationController extends WebController
         } else {
             Yii::$app->session->addFlash('success', Module::t('Invitation accepted successfully.'));
         }
+        return $this->redirect(['/']);
+    }
+
+    /**
+     * Rejects an invitation.
+     *
+     * This function rejects an invitation. It retrieves the invitation token from the request and uses it to retrieve
+     * the corresponding invitation from the database. If the invitation is found, all pending invitation roles
+     * assigned to the current user are rejected.
+     *
+     * @param string $token The invitation token.
+     * @return \yii\web\Response The response object.
+     */
+    public function actionReject($token)
+    {
+        $invitation = Invitation::find()->where(['invitation_token' => $token])->one();
+
+        if (!$invitation) {
+            Yii::$app->session->addFlash('error', Module::t('Invitation not rejected.'));
+            return $this->redirect(['/']);
+        }
+
+        $invitationRoles = InvitationRole::find()->where(['id_invitation' => $invitation->id_invitation,
+        'email' => Yii::$app->user->identity->email])->all();
+
+        if (empty($invitationRoles)) {
+            Yii::$app->session->addFlash('error', Module::t('No invitation roles found for your email.'));
+            return $this->redirect(['/']);
+        }
+
+        foreach ($invitationRoles as $invitationRole) {
+            if ($invitationRole && $invitationRole->status == InvitationRole::STATUS_PENDING && $invitationRole->invitation->date_expire > date('Y-m-d H:i:s')) {
+                $invitationRole->reject();
+            }
+        }
+
+        Yii::$app->session->addFlash('success', Module::t('Invitation rejected successfully.'));
         return $this->redirect(['/']);
     }
 
@@ -299,8 +342,6 @@ class InvitationController extends WebController
     public function actionDetail($id)
     {
         $model = Invitation::findOne($id);
-
-
         if (!\Yii::$app->user->can('workspaceWebDefaultView', ['id_module' => 'workspace', 'model' => $this->findWorkspace($model->id_workspace)])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
@@ -315,7 +356,6 @@ class InvitationController extends WebController
         return $this->render('detail', [
             'model' => $model,
             'dataProvider' => $dataProvider
-
         ]);
     }
 

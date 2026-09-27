@@ -2,6 +2,7 @@
 
 use yii\helpers\Html;
 use portalium\workspace\Module;
+use portalium\workspace\models\Workspace;
 
 use portalium\theme\widgets\Panel;
 use portalium\theme\widgets\ActiveForm;
@@ -15,7 +16,7 @@ use portalium\theme\widgets\ActiveForm;
 
     <?php $form = ActiveForm::begin(); ?>
     <?php Panel::begin([
-    'title' => ($model->isNewRecord) ? Module::t('Create Workspace') : $model->name,
+    'title' => ($model->isNewRecord) ? $this->title : $model->name,
     'actions' => [
         'header' => [
 
@@ -28,6 +29,10 @@ use portalium\theme\widgets\ActiveForm;
 ]) ?>
     <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
+
+    <?php if (!$model->isNewRecord): ?>
+        <?= $form->field($model, 'is_virtual')->dropDownList(Workspace::getIsVirtualList()) ?>
+    <?php endif; ?>
 
     <?php Panel::end() ?>
     <?php ActiveForm::end(); ?>

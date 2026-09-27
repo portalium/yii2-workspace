@@ -3,9 +3,11 @@
 namespace portalium\workspace\components;
 
 use portalium\base\Exception;
+use portalium\workspace\models\Workspace as ModelsWorkspace;
 use Yii;
 use yii\base\Component;
 use portalium\workspace\models\WorkspaceUser;
+use portalium\workspace\models\Workspace as WorkspaceModel;
 use portalium\workspace\Module;
 
 class Workspace extends Component
@@ -92,6 +94,18 @@ class Workspace extends Component
         return null;
     }
 
+    public function getId_user()
+    {
+        $id = $this->getId();
+        if ($id) {
+            $workspace = WorkspaceModel::findOne($id);
+            if ($workspace) {
+                return $workspace->id_user;
+            }
+        }
+        return null;
+    }
+
     public function checkSupportRoles()
     {
         $supportWorkspaceModules = $this->getSupportModules();
@@ -172,12 +186,70 @@ class Workspace extends Component
         return false;
     }
 
-    public function getJoinedWorkspaces()
+    public function getJoinedWorkspaces($isVirtual = WorkspaceModel::IS_VIRTUAL_FALSE, $returnQuery = false)
     {
-        $workspaces = WorkspaceUser::find()
-            ->where(['id_user' => Yii::$app->user->id])
-            ->groupBy('id_workspace')
-            ->all();
-        return $workspaces;
+        $subQuery = (new \yii\db\Query())
+            ->select('MAX(wu2.status)')
+            ->from(WorkspaceUser::tableName() . ' wu2')
+            ->where('wu2.id_user = wu.id_user AND wu2.id_workspace = wu.id_workspace');
+        $query = WorkspaceUser::find()
+            ->alias('wu')
+            ->where(['wu.id_user' => Yii::$app->user->id])
+            ->andWhere(['wu.status' => $subQuery])
+            ->groupBy('wu.id_workspace')
+            ->with('workspace');
+
+        if($isVirtual !== null) 
+        {
+            $query->joinWith(['workspace'])
+            ->andWhere([ModelsWorkspace::tableName() . '.is_virtual' => $isVirtual]);
+        }
+
+        return $returnQuery ? $query : $query->all();
+        
+    }
+
+    public function isMember($id_workspace, $id_user = null)
+    {
+        if ($id_user === null) {
+            $id_user = Yii::$app->user->id;
+        }
+
+        $workspaceUser = WorkspaceUser::find()
+            ->where(['id_user' => $id_user, 'id_workspace' => $id_workspace])
+            ->one();
+        if ($workspaceUser) {
+            return true;
+        }
+        return false;
+    }
+
+    public function set($id_workspace)
+    {
+        $workspaceUserModel = WorkspaceUser::findOne(['id_workspace_user' => $id_workspace, 'id_user' => Yii::$app->user->id]);
+        if ($id_workspace == 0 || !$workspaceUserModel) {
+            Yii::$app->session->addFlash('error', Module::t('You are not allowed to set this workspace.'));
+            // throw new \yii\web\ForbiddenHttpException(Module::t('You are not allossswed to access this page.'));
+            return false;
+        }
+        if (!\Yii::$app->user->can('workspaceWebDefaultSetWorkspace', ['id_module' => 'workspace', 'model' => ModelsWorkspace::findOne(['id_workspace' => $workspaceUserModel->id_workspace])])) {
+            // throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
+            return false;
+        }
+
+        $workspaceUsers = WorkspaceUser::find(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->groupBy('id_workspace_user')->all();
+        if ($workspaceUsers) {
+            foreach ($workspaceUsers as $workspaceUser) {
+                $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
+                $workspaceUser->save();
+            }
+        }
+        $workspaceUser = WorkspaceUser::findOne(['id_workspace_user' => $id_workspace]);
+        if ($workspaceUser) {
+            $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
+            $workspaceUser->save();
+            return true;
+        }
+        return false;
     }
 }

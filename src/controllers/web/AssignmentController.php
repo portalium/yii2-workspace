@@ -150,15 +150,10 @@ class AssignmentController extends WebController
             }
             $workspaceUser->role = $model->role;
             $workspaceUser->save();
-            $roleAssignedSuccessfully = true;
         }
 
-        if ($roleSkipped) {
-            Yii::$app->session->addFlash('error', Module::t('Some users were not assigned a role because the role was not selected.'));
-        }
-        if ($roleAssignedSuccessfully) {
-            Yii::$app->session->addFlash('success', 'Users assigned to role successfully.');
-        }
+        // Display success message to user
+        Yii::$app->session->addFlash('success', 'Users assigned to role successfully.');
 
         // Return true if the action was successful
         return true;
@@ -289,6 +284,7 @@ class AssignmentController extends WebController
             $workspaceUser->save();
             Yii::$app->session->set('active_workspace_id', $workspaceUser->id_workspace);
         }
+        // return $this->goBack(Yii::$app->request->referrer);
 
         if (Yii::$app->request->referrer)
             return $this->redirect(Yii::$app->request->referrer);
@@ -296,6 +292,7 @@ class AssignmentController extends WebController
             return $this->redirect(['/']);
     }
 
+    //get-users
     public function actionGetUsers()
     {
         $id_workspace = Yii::$app->request->post('id_workspace');

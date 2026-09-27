@@ -21,7 +21,7 @@ class AssignmentAsset extends AssetBundle
         'appendTimestamp' => true,
     ];
 
-    public function init()
+    public function init(): void
     {
         parent::init();
     }

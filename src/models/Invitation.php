@@ -41,6 +41,16 @@ class Invitation extends \yii\db\ActiveRecord
         ];
     }
 
+    public function extraFields()
+    {
+        return ['invitationRole'];
+    }
+
+    public function getInvitationRole()
+    {
+        return $this->hasMany(InvitationRole::class, ['id_invitation' => 'id_invitation']);
+    }
+
     /**
      * {@inheritdoc}
      */
