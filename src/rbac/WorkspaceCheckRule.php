@@ -69,7 +69,7 @@ class WorkspaceCheckRule extends Rule
         {
             return true;
         }
-        if(Yii::$app->workspace->can('workspace',$permission))
+        if(Yii::$app->workspace->can('workspace',$permission) && $activeWorkspaceId == $model->id)
         {
             return true;
         }
