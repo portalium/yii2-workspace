@@ -186,7 +186,7 @@ class Workspace extends \yii\db\ActiveRecord
             foreach ($supportModules as $key => $module) {
                 $workspaceUser = new WorkspaceUser();
                 $workspaceUser->id_workspace = $this->id_workspace;
-                $workspaceUser->id_user = Yii::$app->user->id;
+                $workspaceUser->id_user = $this->id_user;
                 if (!Setting::find()->where(['name' => $key . '::workspace::admin_role'])->exists()) {
                     continue;
                 }
