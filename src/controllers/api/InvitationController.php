@@ -96,9 +96,25 @@ class InvitationController extends RestActiveController
                         'id_invitation' => InvitationRole::find()
                             ->select('id_invitation')
                             ->where($filter)
-                    ])
+                    ]);
+
+                    $workspaceIds = (clone $dataProvider->query)
+                        ->select(Module::$tablePrefix . 'invitation.id_workspace')
+                        ->distinct()
+                        ->column();
+
+                    $memberCounts = Yii::$app->workspace->getMemberCounts($workspaceIds);
+
+                    $memberCountCase = 'CASE ' . Module::$tablePrefix . 'invitation.id_workspace';
+                    foreach ($memberCounts as $idWorkspace => $memberCount) {
+                        $memberCountCase .= ' WHEN ' . $idWorkspace . ' THEN ' . $memberCount;
+                    }
+                    $memberCountCase .= ' ELSE 0 END AS workspace_member_count';
+                    
+                    $dataProvider->query
                     ->select([Module::$tablePrefix . 'invitation.*',
-                    Module::$tablePrefix . 'workspace.name AS workspace_name'])
+                    Module::$tablePrefix . 'workspace.name AS workspace_name',
+                    new \yii\db\Expression($memberCountCase)])
                     
                     ->leftJoin(Module::$tablePrefix . 'workspace',
                     Module::$tablePrefix . 'workspace.id_workspace = ' . Module::$tablePrefix . 'invitation.id_workspace')
