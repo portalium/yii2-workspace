@@ -437,7 +437,7 @@ class InvitationController extends RestActiveController
      */
     public function actionRejectExpired()
     {
-        Yii::error('User :' . Yii::$app->user->id . " calling for reject expire");
+        Yii::warning('User :' . Yii::$app->user->id . " calling for reject expire");
 
         if (!Yii::$app->user->can('workspaceApiInvitationExpireCron'))
         {
