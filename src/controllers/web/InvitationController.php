@@ -247,8 +247,6 @@ class InvitationController extends WebController
                     'role' => $invitationRole->role
                 ]);
                 if ($workspaceUser) {
-                    $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
-                    $workspaceUser->save();
                     $invitationRole->accept();
                 } 
                 else 
@@ -264,7 +262,7 @@ class InvitationController extends WebController
                     $workspaceUser->id_user = Yii::$app->user->id;
                     $workspaceUser->role = $invitationRole->role;
                     $workspaceUser->id_module = $invitationRole->module;
-                    $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
+                    $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
                     $workspaceUser->save();
                     $invitationRole->accept();
                 }
