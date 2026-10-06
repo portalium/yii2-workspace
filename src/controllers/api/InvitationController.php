@@ -331,8 +331,6 @@ class InvitationController extends RestActiveController
                 ]);
 
                 if ($workspaceUser) {
-                    $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
-                    $workspaceUser->save();
                     $invitationRole->accept();
                     $processed = true;
                 } 
@@ -348,7 +346,7 @@ class InvitationController extends RestActiveController
                     $workspaceUser->id_user = Yii::$app->user->id;
                     $workspaceUser->role = $invitationRole->role;
                     $workspaceUser->id_module = $invitationRole->module;
-                    $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
+                    $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
                     
                     if ($workspaceUser->save()) {
                         $invitationRole->accept(); // Set accepted status[cite: 4]
