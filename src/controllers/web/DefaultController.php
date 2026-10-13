@@ -47,11 +47,7 @@ class DefaultController extends WebController
         }
 
         $searchModel = new WorkspaceSearch();
-        $query = Yii::$app->workspace->getJoinedWorkspaces(null, true);
-        $dataProvider = new \yii\data\ActiveDataProvider([
-            'query' => $query,
-            'pagination' => ['pageSize' => 20],
-        ]);
+        $dataProvider = $searchModel->search($this->request->queryParams);
 
         $dataProvider->query->andWhere([Module::$tablePrefix . 'workspace.id_user' => Yii::$app->user->id]);
         // $dataProvider->pagination->pageSize = 12;
