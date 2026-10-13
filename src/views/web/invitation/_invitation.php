@@ -1,7 +1,6 @@
 <?php
 
 use kartik\select2\Select2;
-use kartik\date\DatePicker;
 use portalium\user\models\User;
 use portalium\workspace\Module;
 
