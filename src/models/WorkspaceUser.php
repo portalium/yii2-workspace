@@ -130,4 +130,25 @@ class WorkspaceUser extends \yii\db\ActiveRecord
     {
         return parent::find();
     }
+
+    /**
+     * Removes every membership row the user has in the workspace. The owner cannot leave: nobody else could
+     * manage the workspace afterwards.
+     *
+     * @param int $idWorkspace
+     * @param int $idUser
+     * @return int rows removed; 0 when the user is not a member
+     * @throws \yii\base\UserException when the user owns the workspace
+     */
+    public static function leave($idWorkspace, $idUser)
+    {
+        $workspace = Workspace::findOne([Module::$tablePrefix . 'workspace.id_workspace' => $idWorkspace]);
+        if ($workspace === null) {
+            return 0;
+        }
+        if ((int) $workspace->id_user === (int) $idUser) {
+            throw new \yii\base\UserException(Module::t('The owner cannot leave their own workspace.'));
+        }
+        return static::deleteAll(['id_workspace' => $idWorkspace, 'id_user' => $idUser]);
+    }
 }

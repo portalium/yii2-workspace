@@ -68,7 +68,7 @@ class InvitationRole extends \yii\db\ActiveRecord
             $this->invitation->date_expire = date('Y-m-d H:i:s', strtotime('+1 month'));
             $this->invitation->save();
         }
-        $this->sendEmail();
+        return (bool) $this->sendEmail();
     }
 
     public function sendEmail()

@@ -61,14 +61,20 @@ $this->registerCss(
                         'resend' => function ($url, $model, $key) {
                             return Html::a(
                                 Html::tag('i', '', ['class' => 'fa fa-refresh']),
-                                ['resend', 'id' => $model->id_invitation],
+                                ['resend', 'id' => $model->id_invitation_role],
                                 ['class' => 'btn btn-primary btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;', 'data-confirm' => Module::t('Are you sure resend this invitation?')]
                             );
                         },
                         'delete' => function ($url, $model, $key) {
-                            return Html::button(
+                            return Html::a(
                                 Html::tag('i', '', ['class' => 'fa fa-trash']),
-                                ['class' => 'btn btn-danger btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;', 'onclick' => 'deleteInvitation(' . $model->id_invitation . ')']
+                                ['delete', 'id' => $model->id_invitation],
+                                [
+                                    'class' => 'btn btn-danger btn-xs',
+                                    'style' => 'padding: 2px 9px 2px 9px; display: inline-block;',
+                                    'title' => Module::t('Delete'),
+                                    'data' => ['method' => 'post', 'confirm' => Module::t('Are you sure delete this invitation?')],
+                                ]
                             );
                         },
                     ],

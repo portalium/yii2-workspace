@@ -12,6 +12,7 @@ use portalium\user\models\User;
 use portalium\workspace\bundles\AssignmentAsset;
 
 /** @var portalium\workspace\models\Workspace $model */
+/** @var array $assignedUserIds [id_workspace_user => id_user] */
 
 $this->title = $model->name;
 $this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['index']];
@@ -141,7 +142,13 @@ $this->registerCss(
                 'assigned',
                 null,
                 $assignedUsers,
-                ['class' => 'form-control list', 'multiple' => true, 'size' => 20, 'data-target' => 'assigned', 'data-pjax' => true, 'id' => 'assigned-users']
+                [
+                    'class' => 'form-control list', 'multiple' => true, 'size' => 20, 'data-target' => 'assigned', 'data-pjax' => true, 'id' => 'assigned-users',
+                    // Option values are membership rows; get-roles needs the user behind them.
+                    'options' => array_map(function ($idUser) {
+                        return ['data-id-user' => $idUser];
+                    }, $assignedUserIds),
+                ]
             );
             Pjax::end()
             ?>
@@ -216,7 +223,11 @@ $this->registerJs(
     $('#roleModalUpdate').on('show.bs.modal', function (event) {
             var csrfParam = $('meta[name="csrf-param"]').attr("content");
             var csrfToken = $('meta[name="csrf-token"]').attr("content");
-            const id_user = document.getElementById('assigned-users').value;
+            const selected = document.getElementById('assigned-users').selectedOptions[0];
+            if (!selected) {
+                return;
+            }
+            const id_user = selected.dataset.idUser;
             $.ajax({
                 url: 'get-roles',
                 type: 'POST',

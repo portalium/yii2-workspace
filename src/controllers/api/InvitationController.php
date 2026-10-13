@@ -17,6 +17,7 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\BadRequestHttpException;
 use yii\web\UnprocessableEntityHttpException;
+use yii\db\Expression;
 use yii\web\ServerErrorHttpException;
 
 
@@ -96,26 +97,13 @@ class InvitationController extends RestActiveController
                         'id_invitation' => InvitationRole::find()
                             ->select('id_invitation')
                             ->where($filter)
-                    ]);
+                    ])
+                    ->select(array_merge(
+                        [Module::$tablePrefix . 'invitation.*',
+                        Module::$tablePrefix . 'workspace.name AS workspace_name'],
+                        $this->invitationWorkspaceStatsSelect()
+                    ))
 
-                    $workspaceIds = (clone $dataProvider->query)
-                        ->select(Module::$tablePrefix . 'invitation.id_workspace')
-                        ->distinct()
-                        ->column();
-
-                    $memberCounts = Yii::$app->workspace->getMemberCounts($workspaceIds);
-
-                    $memberCountCase = 'CASE ' . Module::$tablePrefix . 'invitation.id_workspace';
-                    foreach ($memberCounts as $idWorkspace => $memberCount) {
-                        $memberCountCase .= ' WHEN ' . $idWorkspace . ' THEN ' . $memberCount;
-                    }
-                    $memberCountCase .= ' ELSE 0 END AS workspace_member_count';
-                    
-                    $dataProvider->query
-                    ->select([Module::$tablePrefix . 'invitation.*',
-                    Module::$tablePrefix . 'workspace.name AS workspace_name',
-                    new \yii\db\Expression($memberCountCase)])
-                    
                     ->leftJoin(Module::$tablePrefix . 'workspace',
                     Module::$tablePrefix . 'workspace.id_workspace = ' . Module::$tablePrefix . 'invitation.id_workspace')
 
@@ -136,6 +124,57 @@ class InvitationController extends RestActiveController
         };
 
         return $actions;
+    }
+
+
+    /**
+     * Davet listesine workspace_plan ve workspace_member_count alanlarini ekler.
+     *
+     * Davet edilen kullanici, kabul etmeden once workspace'in planini ve kac
+     * uyesi oldugunu gorebilsin diye eklenir (plan limitleri istemcide bu iki
+     * degere gore kontrol edilir).
+     *
+     * Abonelik verisi printer modulunun print_subscription tablosunda tutulur;
+     * o modul kurulu degilse tablo da yoktur. Bu yuzden tablo varligi kontrol
+     * edilir ve yoksa alan hic secilmez — workspace modulu printer moduluna
+     * zorunlu bagimli hale gelmez.
+     *
+     * plan degeri anlik hesaplanir: bitis tarihi gecmis ucretli abonelik
+     * plan_free olarak raporlanir (bkz. Subscription::getActivePlanCode).
+     *
+     * @return string[] Ek SELECT ifadeleri
+     */
+    private function invitationWorkspaceStatsSelect(): array
+    {
+        $db     = Yii::$app->db;
+        $quote  = function ($name) use ($db) { return $db->quoteTableName($name); };
+        $select = [];
+
+        $subscriptionTable = 'print_subscription';
+
+        if (in_array($subscriptionTable, $db->schema->getTableNames(), true)) {
+            $now = $db->quoteValue(date('Y-m-d H:i:s'));
+
+            $select['workspace_plan'] = new Expression('(SELECT CASE
+                    WHEN s.' . $quote('end_time') . ' IS NOT NULL AND s.' . $quote('end_time') . ' < ' . $now . '
+                    THEN ' . $db->quoteValue('plan_free') . '
+                    ELSE s.' . $quote('plan_code') . '
+                END
+                FROM ' . $quote($subscriptionTable) . ' s
+                WHERE s.' . $quote('id_workspace') . ' = '
+                    . $quote(Module::$tablePrefix . 'invitation') . '.' . $quote('id_workspace') . '
+                LIMIT 1)');
+        }
+
+        // Ayni kullanici workspace'te her destekli modul icin ayri satir acar;
+        // uye sayisi bu yuzden DISTINCT id_user uzerinden hesaplanir.
+        $select['workspace_member_count'] = new Expression('(SELECT COUNT(DISTINCT wu.' . $quote('id_user') . ')
+            FROM ' . $quote(Module::$tablePrefix . 'workspace_user') . ' wu
+            WHERE wu.' . $quote('id_workspace') . ' = '
+                . $quote(Module::$tablePrefix . 'invitation') . '.' . $quote('id_workspace') . '
+            )');
+
+        return $select;
     }
 
     /**
@@ -192,8 +231,11 @@ class InvitationController extends RestActiveController
 
                 $webLink = Yii::$app->request->hostInfo . '/workspace/invitation/accept?token=' . $invitationModel->invitation_token;
                 
-                return ['model' => $invitationModel,
-                        'link' => $webLink];
+                return [
+                    'model' => $invitationModel,
+                    'link' => $webLink,
+                    'limit_warning' => $this->memberLimitWarning($invitationModel),
+                ];
             }
 
             throw new UnprocessableEntityHttpException(json_encode($invitationModel->getFirstErrors()));
@@ -299,12 +341,13 @@ class InvitationController extends RestActiveController
     }
 
     /**
-     * POST /invitations/accept
+     * POST|GET /invitations/accept?token=:token
+     *
+     * The mobile app posts the token in the body; the e-mail link carries it in the query string.
      */
-    public function actionAccept()
+    public function actionAccept($token = null)
     {
-        $token = Yii::$app->request->getBodyParam('token');
-
+        $token = $token ?: Yii::$app->request->post('token');
         if (empty($token)) {
             throw new BadRequestHttpException(Module::t('Token is required.'));
         }
@@ -360,7 +403,8 @@ class InvitationController extends RestActiveController
             }
         }
 
-        if ($hasError && !$processed) {
+        // Nothing accepted is a failure even without an error: the invitation may belong to another e-mail.
+        if (!$processed) {
             throw new UnprocessableEntityHttpException(Module::t('Invitation could not be accepted. It may be expired or not assigned to your email.'));
         }
 
@@ -398,10 +442,14 @@ class InvitationController extends RestActiveController
             {
                 throw new ForbiddenHttpException(Module::t('You are not allowed to update this invitation.'));
             }
-            $user_email = UserModel::findByUsername($username)->getEmail();
+            // Same lookup as createInvitation(): invitations go to users of any status.
+            $invitee = UserModel::findOne(['username' => (string) $username]);
+            if ($invitee === null) {
+                throw new NotFoundHttpException(Module::t('User not found.'));
+            }
 
             $invitationRoles = InvitationRole::find()->where(['id_invitation' => $invitation->id_invitation,
-            'email' => $user_email])->all();
+            'email' => $invitee->email])->all();
         }
         else //for cancelling users incoming invitation
         {
@@ -507,6 +555,40 @@ class InvitationController extends RestActiveController
             }
         }
         Yii::$app->session->addFlash('success', Module::t('Invitation sent successfully.'));
+    }
+
+    /**
+     * Seats the invitation would take beyond the workspace's member limit, or null.
+     *
+     * Sending is never blocked (acceptance is where the limit applies); the client only warns. The
+     * subscription module is optional for this module, so it is looked up at runtime.
+     *
+     * @return array|null ['limit' => int, 'current' => int, 'pending_new' => int, 'message' => string]
+     */
+    private function memberLimitWarning($invitationModel)
+    {
+        if (!Yii::$app->has('subscription')) {
+            return null;
+        }
+        $subscription = Yii::$app->get('subscription');
+        if (!method_exists($subscription, 'memberLimitWarning')) {
+            return null;
+        }
+        $emails = InvitationRole::find()
+            ->select('email')
+            ->distinct()
+            ->where(['id_invitation' => $invitationModel->id_invitation])
+            ->column();
+        if (empty($emails)) {
+            return null;
+        }
+        $userIds = UserModel::find()->select('id_user')->where(['email' => $emails])->column();
+        try {
+            return $subscription->memberLimitWarning((int)$invitationModel->id_workspace, array_map('intval', $userIds));
+        } catch (\Throwable $e) {
+            Yii::error('Member limit warning could not be computed: ' . $e->getMessage(), __METHOD__);
+            return null;
+        }
     }
 
     /**

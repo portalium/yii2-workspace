@@ -7,6 +7,8 @@ use yii\filters\VerbFilter;
 use portalium\workspace\Module;
 use yii\web\NotFoundHttpException;
 use portalium\workspace\models\Workspace;
+use portalium\workspace\models\WorkspaceUser;
+use yii\data\ActiveDataProvider;
 use portalium\web\Controller as WebController;
 use portalium\workspace\models\WorkspaceSearch;
 
@@ -51,9 +53,21 @@ class DefaultController extends WebController
             'pagination' => ['pageSize' => 20],
         ]);
 
+        $dataProvider->query->andWhere([Module::$tablePrefix . 'workspace.id_user' => Yii::$app->user->id]);
+        // $dataProvider->pagination->pageSize = 12;
+        $joinedDataProvider = new ActiveDataProvider([
+            'query' => Workspace::find()
+                ->where([
+                    'id_workspace' => WorkspaceUser::findNoGroupBy()->select('id_workspace')->where(['id_user' => Yii::$app->user->id]),
+                ])
+                ->andWhere(['<>', 'id_user', Yii::$app->user->id])
+                ->with('user'),
+            'sort' => ['defaultOrder' => ['name' => SORT_ASC]],
+        ]);
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
+            'joinedDataProvider' => $joinedDataProvider,
         ]);
     }
 
