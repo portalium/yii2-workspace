@@ -55,6 +55,7 @@ class m260730_111424_workspace_api_rbac extends Migration
             'workspaceApiAssignmentAssignOwn'       => 'Assign users to own workspace roles via API',
             'workspaceApiAssignmentAssignUpdateOwn' => 'Update user own workspace assignment roles via API',
             'workspaceApiAssignmentRemoveOwn'       => 'Remove users from own workspace assignments via API',
+
         ];
 
         foreach ($permissions as $permissionKey => $permissionDescription) {
@@ -72,6 +73,23 @@ class m260730_111424_workspace_api_rbac extends Migration
                     $auth->addChild($admin, $permissionObject);
                 }
             }
+        }
+
+        //Missing permissions for workspace module
+        if($user)
+        {
+            $auth->addChild($user, $auth->getPermission('workspaceWebDefaultView'));
+            $auth->addChild($user, $auth->getPermission('workspaceWebDefaultIndex'));
+            $auth->addChild($user, $auth->getPermission('workspaceWebDefaultCreate'));
+
+            $auth->getPermission('workspaceWebDefaultUpdate')->ruleName = 'workspaceCheckRule';
+            $auth->addChild($user, $auth->getPermission('workspaceWebDefaultUpdate'));
+
+            $auth->getPermission('workspaceWebDefaultAssignment')->ruleName = 'workspaceCheckRule';
+            $auth->addChild($user, $auth->getPermission('workspaceWebDefaultAssignment'));
+
+            $auth->getPermission('workspaceWebDefaultCreateInvitation')->ruleName = 'workspaceCheckRule';
+            $auth->addChild($user, $auth->getPermission('workspaceWebDefaultCreateInvitation'));
         }
     }
 

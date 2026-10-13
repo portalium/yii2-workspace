@@ -333,8 +333,6 @@ class InvitationController extends WebController
                     'role' => $invitationRole->role
                 ]);
                 if ($workspaceUser) {
-                    $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
-                    $workspaceUser->save();
                     $invitationRole->accept();
                     $processed = true;
                 } 
@@ -351,7 +349,7 @@ class InvitationController extends WebController
                     $workspaceUser->id_user = Yii::$app->user->id;
                     $workspaceUser->role = $invitationRole->role;
                     $workspaceUser->id_module = $invitationRole->module;
-                    $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
+                    $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
                     // A refused row (e.g. the member limit veto) must leave the invitation pending.
                     if ($workspaceUser->save()) {
                         $invitationRole->accept();

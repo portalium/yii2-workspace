@@ -47,13 +47,13 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             ['class' => 'portalium\grid\CheckboxColumn', 'visible' => $canBulkDelete],
             ['class' => 'portalium\grid\SerialColumn'],
-            'name',
-            'user.username',
+            'workspace.name',
+            'workspace.user.username',
             [
-                'attribute' => 'is_virtual',
+                'attribute' => 'workspace.is_virtual',
                 'format' => 'raw',
                 'value' => function ($model) {
-                    return $model->is_virtual == Workspace::IS_VIRTUAL_TRUE
+                    return $model->workspace->is_virtual == Workspace::IS_VIRTUAL_TRUE
                         ? '<span class="badge bg-warning">' . Module::t('Virtual') . '</span>'
                         : '<span class="badge bg-secondary">' . Module::t('Real') . '</span>';
                 },
@@ -62,8 +62,8 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             [
                 'class' => ActionColumn::className(),
-                'urlCreator' => function ($action, Workspace $model, $key, $index, $column) {
-                    return Url::toRoute([$action, 'id' => $model->id_workspace]);
+                'urlCreator' => function ($action, $model, $key, $index, $column) {
+                    return Url::toRoute([$action, 'id' => $model->workspace->id_workspace]);
                 },
                 'template' => '{view} {update} {delete} {assign} {invitation}',
                 'visibleButtons' => [
@@ -87,14 +87,14 @@ $this->params['breadcrumbs'][] = $this->title;
                     'assign' => function ($url, $model) {
                         return Html::a(
                             Html::tag('i', '', ['class' => 'fa fa-user text-warning']),
-                            ['/workspace/assignment/assignment', 'id' => $model->id_workspace],
+                            ['/workspace/assignment/assignment', 'id' => $model->workspace->id_workspace],
                             ['title' => Module::t('Assign'), 'class' => 'btn btn-warning btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
                         );
                     },
                     'invitation' => function ($url, $model) {
                         return Html::a(
                             Html::tag('i', '', ['class' => 'fa fa-thin fa-envelope']),
-                            ['/workspace/invitation/index', 'id' => $model->id_workspace],
+                            ['/workspace/invitation/index', 'id' => $model->workspace->id_workspace],
                             ['title' => Module::t('Invitation'), 'class' => 'btn btn-info btn-xs', 'style' => 'padding: 2px 9px 2px 9px; display: inline-block;']
                         );
                     },

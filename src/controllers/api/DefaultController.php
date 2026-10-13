@@ -111,7 +111,8 @@ class DefaultController extends RestActiveController
 
         if (!(Yii::$app->user->can('workspaceApiDefaultView') ||
               (Yii::$app->user->can('workspaceApiDefaultViewOwn') && $model->id_user == Yii::$app->user->id) ||
-              (Yii::$app->user->can('workspaceApiDefaultView') && Yii::$app->workspace->id == $model->id_workspace))) {
+              (Yii::$app->workspace->can('workspace','workspaceApiDefaultView') && Yii::$app->workspace->id == $model->id_workspace)))
+        {
             throw new ForbiddenHttpException(Module::t('You are not allowed to view this workspace.'));
         }
 

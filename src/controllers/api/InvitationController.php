@@ -374,8 +374,6 @@ class InvitationController extends RestActiveController
                 ]);
 
                 if ($workspaceUser) {
-                    $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
-                    $workspaceUser->save();
                     $invitationRole->accept();
                     $processed = true;
                 } 
@@ -391,7 +389,7 @@ class InvitationController extends RestActiveController
                     $workspaceUser->id_user = Yii::$app->user->id;
                     $workspaceUser->role = $invitationRole->role;
                     $workspaceUser->id_module = $invitationRole->module;
-                    $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
+                    $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
                     
                     if ($workspaceUser->save()) {
                         $invitationRole->accept(); // Set accepted status[cite: 4]
@@ -436,7 +434,7 @@ class InvitationController extends RestActiveController
 
         $username = Yii::$app->request->post('username');
 
-        if($username != null) //for cancelling workspaces outgoing invitation
+        if($username != null || !empty($username)) //for cancelling workspaces outgoing invitation
         {
             if(!($invitation->id_workspace == Yii::$app->workspace->id && 
             ((Yii::$app->user->can('workspaceApiInvitationUpdateOwn') && Yii::$app->workspace->id_user == Yii::$app->user->id)||
@@ -485,7 +483,7 @@ class InvitationController extends RestActiveController
      */
     public function actionRejectExpired()
     {
-        Yii::error('User :' . Yii::$app->user->id . " calling for reject expire");
+        Yii::warning('User :' . Yii::$app->user->id . " calling for reject expire");
 
         if (!Yii::$app->user->can('workspaceApiInvitationExpireCron'))
         {

@@ -186,7 +186,7 @@ class Workspace extends Component
         return false;
     }
 
-    public function getJoinedWorkspaces($isVirtual = WorkspaceModel::IS_VIRTUAL_FALSE)
+    public function getJoinedWorkspaces($isVirtual = WorkspaceModel::IS_VIRTUAL_FALSE, $returnQuery = false)
     {
         $subQuery = (new \yii\db\Query())
             ->select('MAX(wu2.status)')
@@ -204,7 +204,8 @@ class Workspace extends Component
             $query->joinWith(['workspace'])
             ->andWhere([ModelsWorkspace::tableName() . '.is_virtual' => $isVirtual]);
         }
-        return $query->all();
+
+        return $returnQuery ? $query : $query->all();
         
     }
 
@@ -221,6 +222,46 @@ class Workspace extends Component
             return true;
         }
         return false;
+    }
+
+    public function getMemberCount($idWorkspace = null)
+    {
+        if ($idWorkspace === null) {
+            $idWorkspace = Yii::$app->workspace->id;
+        }
+
+        if (!$idWorkspace) {
+            return 0;
+        }
+
+        $memberCounts = $this->getMemberCounts([$idWorkspace]);
+
+        return isset($memberCounts[$idWorkspace]) ? $memberCounts[$idWorkspace] : 0;
+    }
+
+    public function getMemberCounts($workspaceIds)
+    {
+        if (empty($workspaceIds)) {
+            return [];
+        }
+
+        $workspaceUserTable = Module::$tablePrefix . 'workspace_user';
+        $rows = WorkspaceUser::findNoGroupBy()
+            ->select([
+                $workspaceUserTable . '.id_workspace',
+                'member_count' => 'COUNT(DISTINCT ' . $workspaceUserTable . '.id_user)',
+            ])
+            ->where([$workspaceUserTable . '.id_workspace' => $workspaceIds])
+            ->groupBy($workspaceUserTable . '.id_workspace')
+            ->asArray()
+            ->all();
+
+        $memberCounts = [];
+        foreach ($rows as $row) {
+            $memberCounts[$row['id_workspace']] = (int) $row['member_count'];
+        }
+
+        return $memberCounts;
     }
 
     public function set($id_workspace)
