@@ -108,10 +108,15 @@ class InvitationController extends WebController
                 if (empty($model->emails)) {
                     return $this->redirect(['index', 'id' => $model->id_workspace]);
                 }
+                $error = $this->invitationInputError($model->emails, $model->date_expire);
+                if ($error !== null) {
+                    Yii::$app->session->addFlash('error', $error);
+                    return $this->redirect(['index', 'id' => $model->id_workspace]);
+                }
                 $invitationModel = new Invitation();
                 $invitationModel->id_workspace = $model->id_workspace;
                 $invitationModel->date_create = date('Y-m-d H:i:s');
-                $invitationModel->date_expire = $model->date_expire;
+                $invitationModel->date_expire = $this->expiryOf($model->date_expire);
                 $invitationModel->id_user = Yii::$app->user->id;
                 $invitationModel->invitation_token = Yii::$app->security->generateRandomString();
 
@@ -136,12 +141,9 @@ class InvitationController extends WebController
      */
     private function createInvitation($model, $invitationModel)
     {
+        $created = 0;
         foreach ($model->emails as $email) {
-            $modules = Yii::$app->request->post('DynamicModel');
-            foreach ($modules as $key => $value) {
-                if ($value == 'none' || $value == null || $value == '' || Yii::$app->workspace->isAvailableRole($key, $value) == false) {
-                    continue;
-                }
+            foreach ($this->requestedRoles() as $key => $value) {
                 $invitationRoleModel = new InvitationRole();
                 $invitationRoleModel->id_workspace = $invitationModel->id_workspace;
                 $invitationRoleModel->id_invitation = $invitationModel->id_invitation;
@@ -152,11 +154,91 @@ class InvitationController extends WebController
 
                 if ($invitationRoleModel->validate() && $invitationRoleModel->save()) {
                     $invitationRoleModel->sendInvitation();
-                } else {
+                    $created++;
                 }
             }
         }
+        if ($created === 0) {
+            // A fresh invitation without any role cannot be accepted; do not leave it behind.
+            if (!InvitationRole::find()->where(['id_invitation' => $invitationModel->id_invitation])->exists()) {
+                $invitationModel->delete();
+            }
+            Yii::$app->session->addFlash('error', Module::t('Invitation not sent.'));
+            return;
+        }
         Yii::$app->session->addFlash('success', Module::t('Invitation sent successfully.'));
+    }
+
+    /**
+     * Module => role pairs chosen in the form, limited to the roles the module offers.
+     *
+     * @return array
+     */
+    private function requestedRoles()
+    {
+        $modules = Yii::$app->request->post('DynamicModel');
+        $roles = [];
+        if (!is_array($modules)) {
+            return $roles;
+        }
+        foreach ($modules as $key => $value) {
+            if (is_string($value) && $value !== '' && $value !== 'none' && Yii::$app->workspace->isAvailableRole($key, $value)) {
+                $roles[$key] = $value;
+            }
+        }
+        return $roles;
+    }
+
+    /**
+     * Why the invitation form cannot be accepted, or null when it can.
+     *
+     * @param array $emails
+     * @param string|null $dateExpire
+     * @return string|null
+     */
+    private function invitationInputError($emails, $dateExpire)
+    {
+        if ($this->requestedRoles() === []) {
+            return Module::t('Select a role for at least one module.');
+        }
+        $validator = new \yii\validators\EmailValidator();
+        foreach ((array) $emails as $email) {
+            if (!is_string($email) || !$validator->validate($email)) {
+                return Module::t('{email} is not a valid e-mail address.', ['email' => is_string($email) ? $email : '']);
+            }
+        }
+        return $this->expiryError($dateExpire);
+    }
+
+    /**
+     * @param string|null $dateExpire
+     * @return string|null
+     */
+    private function expiryError($dateExpire)
+    {
+        if ($this->expiryOf($dateExpire) === null) {
+            return Module::t('Choose a valid expiry date.');
+        }
+        if (substr((string) $dateExpire, 0, 10) < date('Y-m-d')) {
+            return Module::t('The expiry date cannot be in the past.');
+        }
+        return null;
+    }
+
+    /**
+     * The form sends a day; the invitation stays valid until the end of it (accept compares with the current time).
+     *
+     * @param string|null $dateExpire
+     * @return string|null 'Y-m-d 23:59:59', or null when the value is not a date
+     */
+    private function expiryOf($dateExpire)
+    {
+        $day = substr(trim((string) $dateExpire), 0, 10);
+        $date = \DateTime::createFromFormat('!Y-m-d', $day);
+        if ($date === false || $date->format('Y-m-d') !== $day) {
+            return null;
+        }
+        return $day . ' 23:59:59';
     }
 
     /**
@@ -168,6 +250,9 @@ class InvitationController extends WebController
     public function actionResend($id)
     {
         $model = InvitationRole::findOne($id);
+        if ($model === null) {
+            throw new NotFoundHttpException(Module::t('The requested page does not exist.'));
+        }
         if (!\Yii::$app->user->can('workspaceWebDefaultResendInvitation', ['id_module' => 'workspace', 'model' => $this->findWorkspace($model->invitation->id_workspace)])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
@@ -237,6 +322,7 @@ class InvitationController extends WebController
         $invitationRoles = InvitationRole::find()->where(['id_invitation' => $invitation->id_invitation, 
         'email' => Yii::$app->user->identity->email])->all();
 
+        $processed = false;
         foreach ($invitationRoles as $invitationRole) {
             if ($invitationRole && $invitationRole->status == InvitationRole::STATUS_PENDING && $invitationRole->invitation->date_expire > date('Y-m-d H:i:s'))
             {
@@ -250,6 +336,7 @@ class InvitationController extends WebController
                     $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
                     $workspaceUser->save();
                     $invitationRole->accept();
+                    $processed = true;
                 } 
                 else 
                 {
@@ -265,14 +352,19 @@ class InvitationController extends WebController
                     $workspaceUser->role = $invitationRole->role;
                     $workspaceUser->id_module = $invitationRole->module;
                     $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;
-                    $workspaceUser->save();
-                    $invitationRole->accept();
+                    // A refused row (e.g. the member limit veto) must leave the invitation pending.
+                    if ($workspaceUser->save()) {
+                        $invitationRole->accept();
+                        $processed = true;
+                    } else {
+                        $hasError = true;
+                    }
                 }
             } else {
                 $hasError = true;
             }
         }
-        if (isset($hasError)) {
+        if (isset($hasError) || !$processed) {
             Yii::$app->session->addFlash('error', Module::t('Invitation not accepted.'));
         } else {
             Yii::$app->session->addFlash('success', Module::t('Invitation accepted successfully.'));
@@ -368,6 +460,9 @@ class InvitationController extends WebController
     public function actionUpdate($id)
     {
         $modelInvitation = Invitation::findOne($id);
+        if ($modelInvitation === null) {
+            throw new NotFoundHttpException(Module::t('The requested page does not exist.'));
+        }
         if (!\Yii::$app->user->can('workspaceWebDefaultCreateInvitation', ['id_module' => 'workspace', 'model' => $this->findWorkspace($modelInvitation->id_workspace)])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
@@ -376,15 +471,22 @@ class InvitationController extends WebController
             if ($model->load($this->request->post())) {
                 // Yii::$app->session->addFlash('success', Module::t('Invitation updated successfully.'));
                 // return $this->redirect(['index', 'id' => $model->id_workspace]);
+                $error = empty($model->emails)
+                    ? $this->expiryError($model->date_expire)
+                    : $this->invitationInputError($model->emails, $model->date_expire);
+                if ($error !== null) {
+                    Yii::$app->session->addFlash('error', $error);
+                    return $this->redirect(['update', 'id' => $modelInvitation->id_invitation]);
+                }
                 if (empty($model->emails)) {
-                    $modelInvitation->date_expire = $model->date_expire;
+                    $modelInvitation->date_expire = $this->expiryOf($model->date_expire);
                     if ($modelInvitation->save()) {
                         Yii::$app->session->addFlash('success', Module::t('Invitation updated successfully.'));
                         return $this->redirect(['index', 'id' => $modelInvitation->id_workspace]);
                     }
                 } else {
                     $this->createInvitation($model, $modelInvitation);
-                    $modelInvitation->date_expire = $model->date_expire;
+                    $modelInvitation->date_expire = $this->expiryOf($model->date_expire);
                     if ($modelInvitation->save()) {
                         Yii::$app->session->addFlash('success', Module::t('Invitation updated successfully.'));
                         return $this->redirect(['index', 'id' => $modelInvitation->id_workspace]);

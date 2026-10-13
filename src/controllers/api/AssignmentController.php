@@ -149,30 +149,40 @@ class AssignmentController extends RestActiveController
             return $this->actionAssignUpdate();
         }
 
-        foreach ($model->selected_values as $user) {
-            $workspaceUser = WorkspaceUser::find()->where([
-                'id_workspace' => $model->id,
-                'id_user' => $user,
-                'id_module' => $model->id_module,
-                'role' => $model->role
-            ])->one();
+        // All or nothing: one invalid user must not leave the users before it assigned.
+        $transaction = WorkspaceUser::getDb()->beginTransaction();
+        try {
+            foreach ($model->selected_values as $user) {
+                $workspaceUser = WorkspaceUser::find()->where([
+                    'id_workspace' => $model->id,
+                    'id_user' => $user,
+                    'id_module' => $model->id_module,
+                    'role' => $model->role
+                ])->one();
 
-            if (!$workspaceUser) {
-                $workspaceUser = new WorkspaceUser();
-                $workspaceUser->id_workspace = $model->id;
-                $workspaceUser->id_user = $user;
-                $workspaceUser->id_module = $model->id_module;
-                $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
+                if (!$workspaceUser) {
+                    $workspaceUser = new WorkspaceUser();
+                    $workspaceUser->id_workspace = $model->id;
+                    $workspaceUser->id_user = $user;
+                    $workspaceUser->id_module = $model->id_module;
+                    $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
+                }
+                $workspaceUser->role = $model->role;
+                if (!$workspaceUser->save()) {
+                    throw new UnprocessableEntityHttpException(
+                        json_encode(
+                            $workspaceUser->getErrors(),
+                            JSON_UNESCAPED_UNICODE
+                        )
+                    );
+                }
             }
-            $workspaceUser->role = $model->role;
-            if (!$workspaceUser->save()) {
-                throw new UnprocessableEntityHttpException(
-                    json_encode(
-                        $workspaceUser->getErrors(),
-                        JSON_UNESCAPED_UNICODE
-                    )
-                );
+            $transaction->commit();
+        } catch (\Throwable $e) {
+            if ($transaction->isActive) {
+                $transaction->rollBack();
             }
+            throw $e;
         }
 
         return true;
@@ -189,17 +199,18 @@ class AssignmentController extends RestActiveController
      */
     public function actionAssignUpdate()
     {
-        $id_workspace = Yii::$app->request->put('id_workspace');
+        $id_workspace = Yii::$app->request->getBodyParam('id_workspace');
         $workspace = $this->findModel($id_workspace);
 
-        if (!(Yii::$app->user->can('workspaceApiAssignmentAssignUpdate', ['id_module' => 'workspace', 'model' => $workspace]) ||
-            (Yii::$app->user->can('workspaceApiAssignmentAssignUpdateOwn', ['id_module' => 'workspace', 'model' => $workspace]) && $workspace->id_user == Yii::$app->user->id))) {
+        if (!(Yii::$app->user->can('workspaceApiAssignmentAssignUpdate') ||
+            (Yii::$app->user->can('workspaceApiAssignmentAssignUpdateOwn') && $workspace->id_user == Yii::$app->user->id) ||
+            (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentAssignUpdate') && Yii::$app->workspace->id == $id_workspace))) {
             throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
-        $role = Yii::$app->request->put('role');
-        $ids = Yii::$app->request->put('id_workspace_user');
-        $id_module = Yii::$app->request->put('id_module');
+        $role = Yii::$app->request->getBodyParam('role');
+        $ids = Yii::$app->request->getBodyParam('id_workspace_user');
+        $id_module = Yii::$app->request->getBodyParam('id_module');
 
         if (!$role || !$id_module || !is_array($ids) || empty($ids)) {
             throw new BadRequestHttpException(
@@ -263,6 +274,9 @@ class AssignmentController extends RestActiveController
         }
 
         $workspaceUsersIds = Yii::$app->request->post('id_workspace_user');
+        if (!is_array($workspaceUsersIds) || empty($workspaceUsersIds)) {
+            throw new BadRequestHttpException(Module::t('Cant get id_workspace_user[]'));
+        }
 
         $workspaceUsers = [];
 
@@ -298,8 +312,9 @@ class AssignmentController extends RestActiveController
             $count = count(array_filter($checkWorkspacesDataProvider, function ($workspaceUserCount) use ($workspaceUser) {
                 return $workspaceUserCount->role == $workspaceUser->role && $workspaceUserCount->id_module == $workspaceUser->id_module;
             }));
-            if (isset($workspaceAdminRoles[$workspaceUser->id_module]) && $workspaceUser->role == $workspaceAdminRoles[$workspaceUser->id_module] && $count < 2 && $workspaceUser->workspace->id_user == $workspaceUser->id_user) {
-                $errors[] = sprintf(Module::t('You can not remove user %s from workspace %s because he is an administrator.'), $workspaceUser->user->username, $workspaceUser->workspace->name);
+            // The owner keeps every role in their own workspace; this also covers the old last-admin rule.
+            if ((int) $workspaceUser->workspace->id_user === (int) $workspaceUser->id_user) {
+                $errors[] = Module::t('The workspace owner {user} cannot be removed from {workspace}.', ['user' => $workspaceUser->user->username, 'workspace' => $workspaceUser->workspace->name]);
             } else {
                 $deletebleWorkspaceUsers[] = $workspaceUser->id_workspace_user;
             }
@@ -307,12 +322,36 @@ class AssignmentController extends RestActiveController
         WorkspaceUser::deleteAll(['id_workspace_user' => $deletebleWorkspaceUsers]);
 
         if (!empty($errors)) {
-            throw new UnprocessableEntityHttpException(json_encode($errors));
+            throw new UnprocessableEntityHttpException(json_encode(array_values(array_unique($errors))));
         }
 
         return true;
     }
 
+
+    /**
+     * POST /workspace/assignment/leave
+     *
+     * The signed-in user leaves a workspace they belong to but do not own; every role they hold there is removed.
+     *
+     * @return bool
+     */
+    public function actionLeave()
+    {
+        if (!Yii::$app->user->can('workspaceApiAssignmentLeave')) {
+            throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
+        }
+        $workspace = $this->findModel(Yii::$app->request->post('id_workspace'));
+        try {
+            $removed = WorkspaceUser::leave($workspace->id_workspace, Yii::$app->user->id);
+        } catch (\yii\base\UserException $e) {
+            throw new UnprocessableEntityHttpException($e->getMessage());
+        }
+        if ($removed === 0) {
+            throw new NotFoundHttpException(Module::t('You are not a member of this workspace.'));
+        }
+        return true;
+    }
 
     /**
      * GET /workspace/assignment/assigned-users/:id

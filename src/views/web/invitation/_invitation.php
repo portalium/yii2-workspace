@@ -3,7 +3,6 @@
 use kartik\select2\Select2;
 use portalium\user\models\User;
 use portalium\workspace\Module;
-use yii\jui\DatePicker;
 
 $this->registerCss(
     <<<CSS
@@ -37,14 +36,11 @@ echo $form->field($model, 'emails')->widget(Select2::className(), [
     ],
 ]);
 
-echo $form->field($model, 'date_expire')->widget(DatePicker::classname(), [
-    'dateFormat' => 'yyyy-MM-dd',
-    'options' => ['class' => 'form-control', 'autocomplete' => 'off'],
-    'clientOptions' => [
-        'changeMonth' => true,
-        'changeYear' => true,
-        'yearRange' => Date('Y') . ':' . (Date('Y') + 10),
-    ],
+// yiisoft/yii2-jui is not installed here; the browser's own date input sends the same yyyy-mm-dd value.
+echo $form->field($model, 'date_expire')->input('date', [
+    'class' => 'form-control',
+    'min' => date('Y-m-d'),
+    'value' => $model->date_expire ? substr((string) $model->date_expire, 0, 10) : '',
 ]);
 
 ?>

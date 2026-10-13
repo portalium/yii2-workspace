@@ -67,6 +67,7 @@ class Module extends \portalium\base\Module
                 'POST assign_update' => 'assign-update',
                 'POST assignUpdate' => 'assign-update',
                 'POST remove' => 'remove',
+                'POST leave' => 'leave',
                 'GET assigned-users/<id:\d+>' => 'assigned-users',
                 'GET assigned_users/<id:\d+>' => 'assigned-users',
                 'GET assignedUsers/<id:\d+>' => 'assigned-users',
