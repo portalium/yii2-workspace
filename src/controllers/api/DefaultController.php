@@ -168,7 +168,11 @@ class DefaultController extends RestActiveController
             throw new BadRequestHttpException(Module::t('Please set default role for workspace module.'));
         }
 
+        $ownerId = $model->id_user;
         if ($model->load(Yii::$app->request->getBodyParams(), '')) {
+            if (!Yii::$app->user->can('workspaceWorkspaceFullAccess')) {
+                $model->id_user = $ownerId;
+            }
             if ($model->save())
             {
                 return $model;
@@ -221,7 +225,7 @@ class DefaultController extends RestActiveController
         $workspaceUserModel = WorkspaceUser::findOne(['id_workspace_user' => $id, 'id_user' => Yii::$app->user->id]);
         if ($id == 0 || !$workspaceUserModel) {
             Yii::$app->session->addFlash('error', Module::t('You are not allowed to set this workspace.'));
-            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allossswed to access this page.'));
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
         $workspace = Workspace::findOne(['id_workspace' => $workspaceUserModel->id_workspace]);
@@ -256,6 +260,34 @@ class DefaultController extends RestActiveController
         }
 
         return ['success' => true, 'active_workspace_id' => $workspaceUserModel->id_workspace];
+    }
+
+    /**
+     * GET /workspace/default/active
+     *
+     * Returns the workspace the current request resolves to. Stateless clients send
+     * the X-Workspace-Id header and get that workspace back (membership is verified);
+     * clients without the header get the session/DB resolved one, unchanged.
+     */
+    public function actionActive()
+    {
+        $id_workspace = Yii::$app->workspace->id;
+
+        if ($id_workspace === null) {
+            return [
+                'success' => true,
+                'id_workspace' => null,
+                'source' => 'none',
+                'workspace' => null,
+            ];
+        }
+
+        return [
+            'success' => true,
+            'id_workspace' => $id_workspace,
+            'source' => Yii::$app->workspace->getIdFromHeader() !== null ? 'header' : 'session',
+            'workspace' => Workspace::findOne(['id_workspace' => $id_workspace]),
+        ];
     }
 
     /**

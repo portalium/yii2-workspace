@@ -107,6 +107,16 @@ class Workspace extends \yii\db\ActiveRecord
     }
 
     /**
+     * The name shown to users: the title, falling back to the short (URL-safe slug) name if empty.
+     */
+    public function displayTitle(): string
+    {
+        $title = trim((string) $this->title);
+
+        return $title !== '' ? $title : (string) $this->name;
+    }
+
+    /**
      * Returns list of virtual/real labels for dropdowns and grid filters.
      *
      * @return array
@@ -117,16 +127,6 @@ class Workspace extends \yii\db\ActiveRecord
             self::IS_VIRTUAL_FALSE => Module::t('Real'),
             self::IS_VIRTUAL_TRUE => Module::t('Virtual'),
         ];
-    }
-
-    /**
-     * The name shown to users (e.g. in invitation emails).
-     *
-     * @return string
-     */
-    public function displayTitle()
-    {
-        return $this->name;
     }
 
     /**
@@ -193,17 +193,20 @@ class Workspace extends \yii\db\ActiveRecord
     {
         if ($insert) {
             $supportModules = Yii::$app->workspace->getSupportModules();
+            $ownerId = $this->id_user ?: Yii::$app->user->id;
+            $ownerHasActiveWorkspace = WorkspaceUser::findNoGroupBy()
+                ->where(['id_user' => $ownerId, 'status' => WorkspaceUser::STATUS_ACTIVE])
+                ->exists();
             foreach ($supportModules as $key => $module) {
                 $workspaceUser = new WorkspaceUser();
                 $workspaceUser->id_workspace = $this->id_workspace;
-                $workspaceUser->id_user = $this->id_user;
+                $workspaceUser->id_user = $ownerId;
                 if (!Setting::find()->where(['name' => $key . '::workspace::admin_role'])->exists()) {
                     continue;
                 }
                 $workspaceUser->role = Yii::$app->setting->getValue($key . '::workspace::admin_role');
                 $workspaceUser->id_module = $key;
-                $activeWorkspaceId = Yii::$app->workspace->id;
-                if ($activeWorkspaceId) {
+                if ($ownerHasActiveWorkspace) {
                     $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;
                 } else {
                     $workspaceUser->status = WorkspaceUser::STATUS_ACTIVE;

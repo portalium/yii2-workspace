@@ -62,8 +62,37 @@ class Workspace extends Component
         return $supportWorkspaceModules;
     }
 
+    public const WORKSPACE_HEADER = 'X-Workspace-Id';
+
+    public function getIdFromHeader()
+    {
+        if (Yii::$app->request === null || !Yii::$app->request instanceof \yii\web\Request) {
+            return null;
+        }
+
+        $headerValue = Yii::$app->request->getHeaders()->get(self::WORKSPACE_HEADER);
+        if ($headerValue === null || $headerValue === '' || !ctype_digit((string) $headerValue)) {
+            return null;
+        }
+
+        if (Yii::$app->user->isGuest) {
+            return null;
+        }
+
+        $membership = WorkspaceUser::find()
+            ->where(['id_user' => Yii::$app->user->id, 'id_workspace' => (int) $headerValue])
+            ->one();
+
+        return $membership ? $membership->id_workspace : null;
+    }
+
     public function getId()
     {
+        $headerWorkspaceId = $this->getIdFromHeader();
+        if ($headerWorkspaceId !== null) {
+            return $headerWorkspaceId;
+        }
+
         $workspace = WorkspaceUser::find()
             ->where(['id_user' => Yii::$app->user->id])
             ->andWhere(['status' => WorkspaceUser::STATUS_ACTIVE])
@@ -269,7 +298,7 @@ class Workspace extends Component
         $workspaceUserModel = WorkspaceUser::findOne(['id_workspace_user' => $id_workspace, 'id_user' => Yii::$app->user->id]);
         if ($id_workspace == 0 || !$workspaceUserModel) {
             Yii::$app->session->addFlash('error', Module::t('You are not allowed to set this workspace.'));
-            // throw new \yii\web\ForbiddenHttpException(Module::t('You are not allossswed to access this page.'));
+            // throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
             return false;
         }
         if (!\Yii::$app->user->can('workspaceWebDefaultSetWorkspace', ['id_module' => 'workspace', 'model' => ModelsWorkspace::findOne(['id_workspace' => $workspaceUserModel->id_workspace])])) {
@@ -277,7 +306,7 @@ class Workspace extends Component
             return false;
         }
 
-        $workspaceUsers = WorkspaceUser::find(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->groupBy('id_workspace_user')->all();
+        $workspaceUsers = WorkspaceUser::findNoGroupBy()->where(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->all();
         if ($workspaceUsers) {
             foreach ($workspaceUsers as $workspaceUser) {
                 $workspaceUser->status = WorkspaceUser::STATUS_INACTIVE;

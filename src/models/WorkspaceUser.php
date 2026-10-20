@@ -43,6 +43,7 @@ class WorkspaceUser extends \yii\db\ActiveRecord
             [['id_user', 'id_workspace', 'status'], 'integer'],
             [['role', 'id_module'], 'string', 'max' => 32],
             [['id_user'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['id_user' => 'id_user']],
+            [['id_workspace'], 'exist', 'skipOnError' => true, 'targetClass' => Workspace::class, 'targetAttribute' => ['id_workspace' => 'id_workspace']],
         ];
     }
 
@@ -118,12 +119,13 @@ class WorkspaceUser extends \yii\db\ActiveRecord
         return false;
     }
 
+    /**
+     * Önceden her sorguya gizli groupBy('id_workspace') ekleniyordu; bu, aynı çalışma alanındaki
+     * satırları sessizce yutuyordu. Çalışma alanı başına tek satır isteyen sorgu groupBy'ı açıkça verir.
+     */
     public static function find()
     {
-        $query = parent::find();
-
-        $query->groupBy('id_workspace');
-        return $query;
+        return parent::find();
     }
 
     public static function findNoGroupBy()
@@ -132,24 +134,51 @@ class WorkspaceUser extends \yii\db\ActiveRecord
     }
 
     /**
-     * Of the given user ids, returns those who are not already members of the workspace.
-     *
-     * @param int $idWorkspace
-     * @param int[] $userIds
-     * @return int[]
+     * Users who have a row in any module of the workspace, id_user => username.
      */
-    public static function nonMemberIds(int $idWorkspace, array $userIds): array
+    public static function memberUsernames($idWorkspace): array
     {
+        return User::find()
+            ->select(['username', 'id_user'])
+            ->where(['id_user' => self::findNoGroupBy()->select('id_user')->where(['id_workspace' => (int) $idWorkspace])])
+            ->orderBy(['username' => SORT_ASC])
+            ->indexBy('id_user')
+            ->column();
+    }
+
+    /**
+     * Of the given users, the ids of those who are not members of the workspace.
+     */
+    public static function nonMemberIds($idWorkspace, array $userIds): array
+    {
+        $userIds = array_values(array_unique(array_map('intval', $userIds)));
         if ($userIds === []) {
             return [];
         }
-
         $memberIds = self::findNoGroupBy()
             ->select('id_user')
             ->distinct()
-            ->andWhere(['id_workspace' => $idWorkspace, 'id_user' => $userIds])
+            ->where(['id_workspace' => (int) $idWorkspace, 'id_user' => $userIds])
             ->column();
 
-        return array_values(array_diff(array_map('intval', $userIds), array_map('intval', $memberIds)));
+        return array_values(array_diff($userIds, array_map('intval', $memberIds)));
+    }
+
+    /**
+     * Switches the user's active workspace: activates their rows in that workspace, deactivates
+     * their rows in every other one. Does nothing if the user isn't a member of that workspace.
+     */
+    public static function activateWorkspace(int $idUser, int $idWorkspace): bool
+    {
+        $isMember = self::findNoGroupBy()->where(['id_user' => $idUser, 'id_workspace' => $idWorkspace])->exists();
+        if (!$isMember) {
+            return false;
+        }
+        self::getDb()->transaction(static function () use ($idUser, $idWorkspace) {
+            self::updateAll(['status' => self::STATUS_INACTIVE], ['and', ['id_user' => $idUser], ['<>', 'id_workspace', $idWorkspace]]);
+            self::updateAll(['status' => self::STATUS_ACTIVE], ['id_user' => $idUser, 'id_workspace' => $idWorkspace]);
+        });
+
+        return true;
     }
 }
