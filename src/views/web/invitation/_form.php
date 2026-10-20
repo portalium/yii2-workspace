@@ -1,54 +1,52 @@
 <?php
 
-use kartik\select2\Select2;
 use portalium\theme\helpers\Html;
 use portalium\theme\widgets\ActiveForm;
 use portalium\theme\widgets\Panel;
-use portalium\user\models\User;
 use portalium\workspace\Module;
+use portalium\workspace\models\InvitationRole;
 use yii\jui\DatePicker;
 
-$this->registerCss(
-    <<<CSS
-    .select2 .selection {
-        width: 100%;
-    }
+/** @var yii\web\View $this */
+/** @var portalium\workspace\models\InvitationForm $model */
+/** @var yii\base\DynamicModel $dynamicModuleModel */
+/** @var array $availableRoles modül => roller */
+/** @var portalium\workspace\models\Invitation $modelInvitation */
+/** @var array<string,string> $acceptedModules kabul edilmiş rolü olan modüller (modül => rol) */
+/** @var string|null $roleError */
 
-    legend {
-        float: none;
-        width: auto;
-        font-size: inherit;
+$email = $modelInvitation->inviteeEmail();
+
+if ($modelInvitation->isAccepted()) {
+    Panel::begin(['title' => Html::encode(Module::t('Update Invitation'))]);
+    if ($email !== null) {
+        echo Html::tag('p', Html::encode(Module::t('Invited address: {email}', ['email' => $email])));
     }
-    CSS
-);
+    echo Html::tag('p', Html::encode(Module::t(
+        'This invitation has been accepted; its roles cannot be changed. To change the member\'s roles, use the Members and roles page.'
+    )), ['id' => 'ws-invitation-readonly']);
+    echo Html::beginTag('ul', ['class' => 'mb-0']);
+    foreach ($modelInvitation->roles as $role) {
+        echo Html::tag('li', Html::encode($role->module . ': ' . $role->role));
+    }
+    echo Html::endTag('ul');
+    Panel::end();
+    return;
+}
+
 $form = ActiveForm::begin();
 Panel::begin([
-    'title' => ($modelInvitation->isNewRecord) ? Module::t('Create Workspace') : $modelInvitation->workspace->name,
+    'title' => Html::encode(Module::t('Update Invitation')),
     'actions' => [
-        'header' => [],
         'footer' => [
-            ($modelInvitation->isNewRecord) ?  Html::submitButton(Module::t('Save'), ['class' => 'btn btn-success']) :
-                Html::submitButton(Module::t('Update'), ['class' => 'btn btn-primary'])
-        ]
-    ]
-]);
-echo $form->field($model, 'emails')->widget(Select2::className(), [
-    'name' => 'color_3',
-    'data' => array_map(function ($item) {
-        return Module::t($item);
-    }, $usersEmail),
-    'maintainOrder' => true,
-    'toggleAllSettings' => [
-        'selectLabel' => '<i class="fa fa-check-circle"></i> Tag All',
-        'unselectLabel' => '<i class="fa fa-times-circle"></i> Untag All',
-        'selectOptions' => ['class' => 'text-success'],
-        'unselectOptions' => ['class' => 'text-danger'],
-    ],
-    'options' => ['placeholder' => 'Select or add a user ...', 'multiple' => true, 'style' => 'width:100%'],
-    'pluginOptions' => [
-        'tags' => true,
+            Html::submitButton(Module::t('Save'), ['class' => 'btn btn-success']),
+        ],
     ],
 ]);
+if ($email !== null) {
+    echo Html::tag('p', Html::encode(Module::t('Invited address: {email}', ['email' => $email])));
+}
+echo Html::tag('p', Html::encode(Module::t('Saving does not send an email; the invitation link stays the same.')), ['class' => 'text-muted small']);
 
 echo $form->field($model, 'date_expire')->widget(DatePicker::classname(), [
     'dateFormat' => 'yyyy-MM-dd',
@@ -56,25 +54,36 @@ echo $form->field($model, 'date_expire')->widget(DatePicker::classname(), [
     'clientOptions' => [
         'changeMonth' => true,
         'changeYear' => true,
+        'minDate' => 0,
         'yearRange' => Date('Y') . ':' . (Date('Y') + 10),
     ],
-]);
-
+])->hint($modelInvitation->isExpired()
+    ? Module::t('Expired on {date}: pick a new date, or resend it from the list.', ['date' => substr((string) $modelInvitation->date_expire, 0, 16)])
+    : Module::t('Current date: {date}. Leave empty to keep it.', ['date' => substr((string) $modelInvitation->date_expire, 0, 16)]));
 ?>
 
-<div class="mb-3 row field-invitationform-emails required">
-    <label class="col-sm-2 col-form-label" for="invitationform-emails">Roles</label>
+<div class="mb-3 row">
+    <span class="col-sm-2 col-form-label"><?= Html::encode(Module::t('Roles')) ?></span>
     <div class="col-sm-10">
-        <div style="border-width: 1px; border-style: solid; border-color: #dee2e6; border-image: initial; padding-top: 13px;   padding-left: 10px;
-    padding-right: 10px;
-    margin-bottom: 1rem;">
+        <div class="ws-invitation-roles">
             <?php
+            if ($roleError !== null) {
+                echo Html::tag('div', Html::encode($roleError), ['class' => 'invalid-feedback d-block mb-2', 'id' => 'ws-invitation-role-error']);
+            }
             foreach ($dynamicModuleModel as $key => $value) {
                 $availableRole = [];
-                foreach ($availableRoles[$key] as $role) {
+                foreach ((array) ($availableRoles[$key] ?? []) as $role) {
                     $availableRole[$role] = $role;
                 }
-                echo $form->field($dynamicModuleModel, $key)->dropDownList($availableRole, ['prompt' => 'Select Role', 'class' => 'form-control', 'style' => 'margin-bottom: 5px;']);
+                if (isset($acceptedModules[$key])) {
+                    $availableRole[$acceptedModules[$key]] = $acceptedModules[$key];
+                    $dynamicModuleModel->$key = $acceptedModules[$key];
+                    echo $form->field($dynamicModuleModel, $key)
+                        ->dropDownList($availableRole, ['class' => 'form-control', 'disabled' => true])
+                        ->hint(Module::t('Accepted; cannot be changed here.'));
+                    continue;
+                }
+                echo $form->field($dynamicModuleModel, $key)->dropDownList($availableRole, ['prompt' => Module::t('No role'), 'class' => 'form-control']);
             }
             ?>
         </div>
@@ -83,4 +92,3 @@ echo $form->field($model, 'date_expire')->widget(DatePicker::classname(), [
 <?php
 Panel::end();
 ActiveForm::end();
-?>
