@@ -1,0 +1,66 @@
+.invitation-action {
+    padding: 2px 9px;
+    display: inline-block;
+}
+
+.ws-invitation-roles {
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 0.25rem;
+    padding: 0.75rem 0.75rem 0;
+    margin-bottom: 1rem;
+}
+
+.ws-invitation-renew {
+    margin-left: 0.25rem;
+    white-space: normal;
+}
+
+.ws-invitation-sending {
+    display: inline-block;
+    width: 30px;
+    height: 7px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.ws-invitation-dot-typing {
+    position: relative;
+    left: -9999px;
+    width: 7px;
+    height: 7px;
+    border-radius: 5px;
+    background-color: currentColor;
+    color: currentColor;
+    box-shadow: 9984px 0 0 0 currentColor, 9999px 0 0 0 currentColor, 10014px 0 0 0 currentColor;
+    animation: ws-invitation-dot-typing 1.5s infinite linear;
+}
+
+@keyframes ws-invitation-dot-typing {
+    0% {
+        box-shadow: 9984px 0 0 0 currentColor, 9999px 0 0 0 currentColor, 10014px 0 0 0 currentColor;
+    }
+    16.667% {
+        box-shadow: 9984px -6px 0 0 currentColor, 9999px 0 0 0 currentColor, 10014px 0 0 0 currentColor;
+    }
+    33.333% {
+        box-shadow: 9984px 0 0 0 currentColor, 9999px 0 0 0 currentColor, 10014px 0 0 0 currentColor;
+    }
+    50% {
+        box-shadow: 9984px 0 0 0 currentColor, 9999px -6px 0 0 currentColor, 10014px 0 0 0 currentColor;
+    }
+    66.667% {
+        box-shadow: 9984px 0 0 0 currentColor, 9999px 0 0 0 currentColor, 10014px 0 0 0 currentColor;
+    }
+    83.333% {
+        box-shadow: 9984px 0 0 0 currentColor, 9999px 0 0 0 currentColor, 10014px -6px 0 0 currentColor;
+    }
+    100% {
+        box-shadow: 9984px 0 0 0 currentColor, 9999px 0 0 0 currentColor, 10014px 0 0 0 currentColor;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ws-invitation-dot-typing {
+        animation: none;
+    }
+}
