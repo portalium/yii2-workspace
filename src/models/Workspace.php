@@ -120,6 +120,16 @@ class Workspace extends \yii\db\ActiveRecord
     }
 
     /**
+     * The name shown to users (e.g. in invitation emails).
+     *
+     * @return string
+     */
+    public function displayTitle()
+    {
+        return $this->name;
+    }
+
+    /**
      * Gets query for [[WorkspaceWorkspaceUsers]].
      *
      * @return \yii\db\ActiveQuery

@@ -3,7 +3,9 @@
 namespace portalium\workspace\models;
 
 use portalium\user\models\User;
+use portalium\workspace\components\InvitationSignup;
 use Yii;
+use yii\helpers\Html;
 use portalium\workspace\Module;
 
 /**
@@ -61,16 +63,24 @@ class InvitationRole extends \yii\db\ActiveRecord
         ];
     }
 
+    /**
+     * Davetin bağlantısı yoksa üretir, süresi geçmişse uzatır ve adrese e-postayı gönderir.
+     */
     public function sendInvitation()
     {
-        if ($this->invitation->invitation_token == null) {
-            $this->invitation->invitation_token = Yii::$app->security->generateRandomString();
-            $this->invitation->date_expire = date('Y-m-d H:i:s', strtotime('+1 month'));
-            $this->invitation->save();
+        $invitation = $this->invitation;
+        if ($invitation === null || !$invitation->prepareForSending()) {
+            return false;
         }
-        $this->sendEmail();
+        return (bool) $this->sendEmail();
     }
 
+    /**
+     * Davet e-postası. Kabul ve kayıt bağlantıları davetin imzasını (sig) taşır (karar 35/49); imzalı kayıt bağlantısı
+     * auth::web_signup kapalıyken de gönderilir (karar 40: imzalı davetle kayıt bu ayardan muaf). Sırrı olmayan
+     * davette (kolon yok) bağlantılar imzasızdır; kayıt bağlantısı o zaman yalnız kayıt açıkken gönderilir. Bildirimdeki
+     * bağlantı (yalnız hesabı olan alıcı görür) imzasızdır; giriş yapmış kullanıcı için imza gerekmez.
+     */
     public function sendEmail()
     {
         $workspace = Workspace::findOne($this->id_workspace);
@@ -81,23 +91,44 @@ class InvitationRole extends \yii\db\ActiveRecord
 
         Yii::$app->site->mailer->setViewPath(Yii::getAlias('@portalium/workspace/mail'));
         $user = User::findOne(['email' => $this->email]);
-        
-        if ($user){
-            $verifyLink = Yii::$app->request->hostInfo . '/workspace/invitation/accept?token=' . $this->invitation->invitation_token;
-            Yii::$app->notification->addNotification($user->id_user, Module::t('You have been invited to join {workspace_name} workspace.', ['workspace_name' => $workspace->name]), '<a href="'.$verifyLink.'">Please click if accept invitation</a>');
+
+        if ($user && Yii::$app->has('notification')) {
+            $verifyLink = Yii::$app->urlManager->createAbsoluteUrl(['workspace/invitation/accept', 'token' => $this->invitation->invitation_token]);
+            Yii::$app->notification->addNotification(
+                $user->id_user,
+                Module::t('You have been invited to join {workspace_name} workspace.', ['workspace_name' => $workspace->displayTitle()]),
+                Html::a(Html::encode(Module::t('Click to accept the invitation')), $verifyLink)
+            );
         }
+        $signature = InvitationSignup::signature($this->invitation);
+        $signed = $signature === null ? [] : [InvitationSignup::SIGNATURE_PARAM => $signature];
+        $acceptUrl = Yii::$app->urlManager->createAbsoluteUrl(
+            array_merge(['workspace/invitation/accept', 'token' => $this->invitation->invitation_token], $signed)
+        );
+        $signupUrl = ($user === null && ($signature !== null || Yii::$app->setting->getValue('auth::web_signup')))
+            ? Yii::$app->urlManager->createAbsoluteUrl(
+                array_merge(['/auth/default/signup', 'invitation' => $this->invitation->invitation_token], $signed)
+            )
+            : null;
 
         return Yii::$app
             ->site
             ->mailer
             ->compose(
                 ['html' => 'invitation-html', 'text' => 'invitation-text'],
-                ['workspace' => $workspace, 'invitation' => $this]
+                [
+                    'workspace' => $workspace,
+                    'invitation' => $this,
+                    'hasAccount' => $user !== null,
+                    'acceptUrl' => $acceptUrl,
+                    'signupUrl' => $signupUrl,
+                    'inviterName' => $this->invitation->inviterName(),
+                ]
             )
 
             ->setFrom([Yii::$app->setting->getValue('email::address') => Yii::$app->setting->getValue('email::displayname')])
             ->setTo($this->email)
-            ->setSubject(Module::t('You have been invited to join {workspace_name} workspace.', ['workspace_name' => $workspace->name]))
+            ->setSubject(Module::t('You have been invited to join {workspace_name} workspace.', ['workspace_name' => $workspace->displayTitle()]))
             ->send();
     }
 

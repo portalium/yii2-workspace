@@ -4,6 +4,8 @@ namespace portalium\workspace\models;
 
 use portalium\data\ActiveDataProvider;
 use portalium\workspace\models\Invitation;
+use portalium\workspace\Module;
+
 /**
  * This is the model class for table "workspace_invitation".
  *
@@ -23,6 +25,11 @@ use portalium\workspace\models\Invitation;
 class InvitationSearch extends Invitation
 {
     /**
+     * Davet edilen adrese göre süzme (adres rol satırlarındadır).
+     */
+    public $inviteeEmail;
+
+    /**
      * {@inheritdoc}
      */
     public function rules()
@@ -30,7 +37,16 @@ class InvitationSearch extends Invitation
         return [
             [['id_invitation', 'id_workspace', 'id_user'], 'integer'],
             [['invitation_token', 'date_create', 'date_expire'], 'safe'],
+            [['inviteeEmail'], 'string', 'max' => 255],
         ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return array_merge(parent::attributeLabels(), ['inviteeEmail' => Module::t('Email')]);
     }
 
     /**
@@ -68,6 +84,12 @@ class InvitationSearch extends Invitation
 
         $query
             ->andFilterWhere(['like', 'invitation_token', $this->invitation_token]);
+
+        if ($this->inviteeEmail !== null && $this->inviteeEmail !== '') {
+            $query->andWhere(['exists', InvitationRole::find()->alias('sr')
+                ->where('sr.id_invitation = ' . Invitation::tableName() . '.id_invitation')
+                ->andWhere(['like', 'sr.email', $this->inviteeEmail])]);
+        }
 
         return $dataProvider;
     }
