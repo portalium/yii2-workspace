@@ -1,0 +1,9 @@
+.select2 .selection {
+    width: 100%;
+}
+
+legend {
+    float: none;
+    width: auto;
+    font-size: inherit;
+}

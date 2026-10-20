@@ -29,6 +29,10 @@ class AssignmentController extends WebController
                     'class' => VerbFilter::className(),
                     'actions' => [
                         'delete' => ['POST'],
+                        'assign' => ['POST'],
+                        'assign-update' => ['POST'],
+                        'remove' => ['POST'],
+                        'set-workspace' => ['POST'],
                     ],
                 ],
             ]
@@ -56,7 +60,6 @@ class AssignmentController extends WebController
         }
         $workspace = $this->findModel($id);
 
-        $users = User::find()->select(['id_user', 'username'])->asArray()->all();
         $assignedUsers = WorkspaceUser::find()
             ->select([UserModule::$tablePrefix . 'user.id_user', Module::$tablePrefix . 'workspace_user.id_workspace_user', 'username', Module::$tablePrefix . 'workspace_user.role', Module::$tablePrefix . 'workspace_user.id_module'])
             ->leftJoin(UserModule::$tablePrefix . 'user', UserModule::$tablePrefix . 'user.id_user = ' . Module::$tablePrefix . 'workspace_user.id_user')
@@ -64,11 +67,6 @@ class AssignmentController extends WebController
             ->andWhere([Module::$tablePrefix . 'workspace_user.id_workspace' => $id])
             ->asArray()
             ->all();
-
-        $assignedUserIds = array_column($assignedUsers, 'id_user');
-        $availableUsers = array_filter($users, function ($user) use ($assignedUserIds) {
-            return !in_array($user['id_user'], $assignedUserIds);
-        });
 
         $assignedUsers = array_map(function ($user) {
             $user['username'] = $user['username'] . ' (' . $user['role'] . (isset($user['id_module']) ? ' / ' . $user['id_module'] : '') . ')';
@@ -98,7 +96,8 @@ class AssignmentController extends WebController
         $dynamicModuleModel->_labels = $labels;
         return $this->render('assignment', [
             'model' => $workspace,
-            'users' => ArrayHelper::map($availableUsers, 'id_user', 'username'),
+            'users' => $this->assignableUsers($id),
+            'canAddAnyUser' => $this->canAddAnyUser(),
             'assignedUsers' => ArrayHelper::map($assignedUsers, 'id_workspace_user', 'username'),
             'moduleArray' => $moduleArray,
             'dynamicModuleModel' => $dynamicModuleModel,
@@ -114,7 +113,11 @@ class AssignmentController extends WebController
      * role, users, and workspace ID from the request. It then updates or inserts records into the Module::$tablePrefix . `_workspace_user`
      * table to reflect the new role assignments. Finally, it displays a success message to the user.
      *
+     * Yalnız POST (karar 7): çalışma alanı kimliği adreste (id), diğer alanlar gövdede. Üye olmayana rol verme
+     * 403 ile reddedilir; mesajı sayfa JS'i gösterir (karar 10a).
+     *
      * @return bool True if the action was successful.
+     * @throws \yii\web\ForbiddenHttpException
      */
     public function actionAssign()
     {
@@ -124,14 +127,20 @@ class AssignmentController extends WebController
         }
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $model = new AssignmentForm();
-        $model->load(Yii::$app->request->get(), '');
+        $model->load(array_merge((array) Yii::$app->request->post(), ['id' => $id_workspace]), '');
         if (!$model->validate()) {
-            Yii::$app->session->addFlash('error', 'Please fill all required fields.');
+            Yii::$app->session->addFlash('error', Module::t('Please fill all required fields.'));
             return $model->errors;
         }
 
         if ($model->type == 'update') {
             return $this->actionAssignUpdate();
+        }
+
+        if (!$this->canAddAnyUser() && WorkspaceUser::nonMemberIds($id_workspace, $model->selected_values) !== []) {
+            throw new \yii\web\ForbiddenHttpException(
+                Module::t('Only members of this workspace can be given a role here. To add someone new, send an invitation.')
+            );
         }
 
         $workspaceUsers = WorkspaceUser::find()->where(['id_workspace' => $id_workspace, 'id_user' => $model->selected_values, 'id_module' => $model->id_module, 'role' => $model->role])->all();
@@ -152,8 +161,7 @@ class AssignmentController extends WebController
             $workspaceUser->save();
         }
 
-        // Display success message to user
-        Yii::$app->session->addFlash('success', 'Users assigned to role successfully.');
+        Yii::$app->session->addFlash('success', Module::t('The role was given to the selected members.'));
 
         // Return true if the action was successful
         return true;
@@ -175,12 +183,12 @@ class AssignmentController extends WebController
         if (!\Yii::$app->user->can('workspaceWebDefaultAssignUpdate', ['id_module' => 'workspace', 'model' => $this->findModel($id_workspace)])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
-        // Retrieve role, users, and workspace ID from the request
-        $role = Yii::$app->request->get('role');
-        $workspaceUsers = Yii::$app->request->get('selected_values');
-        $id_module = Yii::$app->request->get('id_module');
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $role = Yii::$app->request->post('role');
+        $workspaceUsers = Yii::$app->request->post('selected_values');
+        $id_module = Yii::$app->request->post('id_module');
 
-        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace_user' => $workspaceUsers])->all();
+        $workspaceUsers = WorkspaceUser::findNoGroupBy()->where(['id_workspace_user' => $workspaceUsers, 'id_workspace' => $id_workspace])->all();
 
         foreach ($workspaceUsers as $workspaceUser) {
             $workspaceUser->role = $role;
@@ -195,8 +203,7 @@ class AssignmentController extends WebController
             }
         }
 
-        // Display success message to user
-        Yii::$app->session->addFlash('success', 'Users assigned to role successfully.');
+        Yii::$app->session->addFlash('success', Module::t('The role was changed.'));
 
         // Return true if the action was successful
         return true;
@@ -217,8 +224,9 @@ class AssignmentController extends WebController
         if (!\Yii::$app->user->can('workspaceWebDefaultRemove', ['id_module' => 'workspace', 'model' => $this->findModel($id_workspace)])) {
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
-        $workspaceUsersIds = Yii::$app->request->get('selected_values');
-        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace_user' => $workspaceUsersIds])->groupBy(['id_workspace_user'])->all();
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $workspaceUsersIds = Yii::$app->request->post('selected_values');
+        $workspaceUsers = WorkspaceUser::findNoGroupBy()->where(['id_workspace_user' => $workspaceUsersIds, 'id_workspace' => $id_workspace])->all();
         $uniqueModule = [];
         $workspaceAdminRoles = [];
         foreach ($workspaceUsers as $workspaceUser) {
@@ -250,7 +258,7 @@ class AssignmentController extends WebController
             }
         }
         WorkspaceUser::deleteAll(['id_workspace_user' => $deletebleWorkspaceUsers]);
-        Yii::$app->session->addFlash('success', 'Users removed from role successfully.');
+        Yii::$app->session->addFlash('success', Module::t('Selected roles were removed.'));
         return true;
     }
 
@@ -269,7 +277,7 @@ class AssignmentController extends WebController
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
-        $workspaceUsers = WorkspaceUser::find(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->groupBy('id_workspace_user')->all();
+        $workspaceUsers = WorkspaceUser::findNoGroupBy()->where(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->all();
         if ($workspaceUsers) {
             foreach ($workspaceUsers as $workspaceUser) {
                 if ($workspaceUser->status == WorkspaceUser::STATUS_INACTIVE)
@@ -302,21 +310,19 @@ class AssignmentController extends WebController
         if (!$id_workspace || !$role) {
             return json_encode([]);
         }
-
-        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace' => $id_workspace])->groupBy('id_user')->all();
-        $workspaceUsersArray = [];
-        foreach ($workspaceUsers as $workspaceUser) {
-            $workspaceUsersArray[] = $workspaceUser->id_user;
+        if (!\Yii::$app->user->can('workspaceWebDefaultAssignment', ['id_module' => 'workspace', 'model' => $this->findModel($id_workspace)])) {
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
-        // $users = array_diff($users, $workspaceUsersArray);
-        $users = User::find()->all();
-        $users = ArrayHelper::map($users, 'id_user', 'username');
-        return json_encode($users);
+
+        return json_encode($this->assignableUsers($id_workspace));
     }
 
     public function actionGetRoles()
     {
         $id_user = Yii::$app->request->post('id_user');
+        if (!$this->canSeeRolesOf($id_user)) {
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
+        }
         $authManager = Yii::$app->authManager;
         $roles = $authManager->getRolesByUser($id_user);
         $roles = ArrayHelper::map($roles, 'name', 'name');
@@ -341,6 +347,45 @@ class AssignmentController extends WebController
             }
             return json_encode(['output' => $out, 'selected' => '']);
         }
+    }
+
+    /**
+     * Sistem geneli atama izni: workspaceWebDefaultAssign modelsiz sorulur. admin rolünde doğrudan vardır,
+     * workspaceWorkspaceFullAccess sahibi de WorkspaceCheckRule üzerinden geçer. Sahibin izni
+     * ...ForWorkspace kuralına bağlıdır ve model ister; modelsiz soruda false döner.
+     */
+    private function canAddAnyUser(): bool
+    {
+        return Yii::$app->user->can('workspaceWebDefaultAssign');
+    }
+
+    /**
+     * Atama listesindeki kullanıcılar (id_user => username). Sistem geneli atama izni olan herkesi görür;
+     * diğerleri yalnızca çalışma alanının mevcut üyelerini. Yeni üye davetle gelir.
+     */
+    private function assignableUsers($id_workspace): array
+    {
+        if ($this->canAddAnyUser()) {
+            return User::find()->select(['username', 'id_user'])->indexBy('id_user')->column();
+        }
+
+        return WorkspaceUser::memberUsernames($id_workspace);
+    }
+
+    /**
+     * Kişi kendi rollerini, tam yetkili herkesinkini, sahip de kendi çalışma alanlarının
+     * üyelerininkini görebilir.
+     */
+    private function canSeeRolesOf($id_user)
+    {
+        if ((int) $id_user === (int) Yii::$app->user->id || Yii::$app->user->can('workspaceWorkspaceFullAccess')) {
+            return true;
+        }
+        $ownedWorkspaceIds = Workspace::find()->select('id_workspace')->where(['id_user' => Yii::$app->user->id])->column();
+        if (empty($ownedWorkspaceIds)) {
+            return false;
+        }
+        return WorkspaceUser::findNoGroupBy()->where(['id_user' => $id_user, 'id_workspace' => $ownedWorkspaceIds])->exists();
     }
 
     /**

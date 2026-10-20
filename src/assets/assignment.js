@@ -1,152 +1,184 @@
-$(document).ready(function () {
-    // Handles the click event for the role-select element
-    $('#role-select').on('click', async function (e) {
-        var selectedUsers = $('#users-select-list').val();
+(function () {
+    'use strict';
 
-        let modules = $('.module-list');
-
-        let moduleRoles = {};
-        modules.each(function (index, element) {
-            let attr = element.attributes['data-key'];
-            let dataKey = attr.value;
-            moduleRoles[dataKey] = element.value;
-        });
-        let selectedValues = [];
-        selectedUsers.forEach(function (element) {
-            selectedValues.push(element);
-        }
-        );
-
-        
-        
-        let iTag = $('.fa-arrow-right');
-        iTag.removeClass('fa fa-arrow-right');
-        iTag.addClass('spinner-border spinner-border-sm');
-
-        for (let key in moduleRoles) {
-            let role = moduleRoles[key];
-            let id_module = key;
-            await assignAction(selectedValues, role, id_workspace, '#roleModal', id_module, 'create');
-        }
-        iTag.removeClass('spinner-border spinner-border-sm');
-        iTag.addClass('fa fa-arrow-right');
-        try {
-            $.pjax.reload({ container: '#pjax-flash-message' });
-        } catch (error) {
-
-        }
-    });
-
-    // Handles the click event for the role-select-update button
-    $('#role-select-update').on('click', function () {
-        var selectedValues = $('select[data-target="assigned"]').val();
-        var selectedRole = $('#role-list-update').val();
-        var id_module = $('#module-list-update').val();
-        var selectedUsers = $('#assigned-users').val();
-        assignAction(selectedUsers, selectedRole, id_workspace, '#roleModalUpdate', id_module, 'update');
-        try {
-            $.pjax.reload({ container: '#pjax-flash-message' });
-        } catch (error) {
-
-        }
-    });
-
-    // Handles the click event for the removeButton element
-    $('#removeButton').on('click', function () {
-        $('#users-panel').hide();
-        $('#spinner-div-page').show();
-
-        var selectedValues = $('select[data-target="assigned"]').val();
-        removeAction(selectedValues, id_workspace, '#roleModal');
-        try {
-            $.pjax.reload({ container: '#pjax-flash-message' });
-        } catch (error) {
-
-        }
-    });
+    var $ = window.jQuery;
 
     /**
-     * Sends an AJAX request to the assign action with the selected users, role, and workspace ID as parameters.
-     * When the response is received, it reloads the assigned and users sections using pjax, and hides the role modal.
-     *
-     * @param {Array} selectedValues An array of selected values.
-     * @param {string} selectedRole The selected role.
-     * @param {string} id_workspace The workspace ID.
-     * @param {string} modalSelector The modal selector.
+     * Rol ver / rol değiştir / çıkar uçları yalnız POST kabul eder (karar 7); CSRF jetonu gövdeye eklenir.
      */
-    async function assignAction(selectedValues, selectedRole, id_workspace, modalSelector, id_module, type) {
-        if (selectedRole === '' || selectedRole === null) {
-            return;
+    function csrfData(data) {
+        var yii = window.yii;
+        if (yii && typeof yii.getCsrfParam === 'function' && yii.getCsrfParam()) {
+            data[yii.getCsrfParam()] = yii.getCsrfToken();
         }
-        // Send AJAX request to assign action with selected users, role, and workspace ID
-        return await new Promise((resolve, reject) => {
-            $.get('assign', {
-                selected_values: selectedValues,
-                role: selectedRole,
-                id: id_workspace,
-                id_module: id_module,
-                type: type
-            }, function (data) {
-                // Reload assigned and users sections using pjax
-                $.pjax.reload({
-                    container: '#assigned'
-                }).done(function () {
-                    $.pjax.reload({
-                        container: '#users'
-                    }).done(function () {
-                        $(modalSelector).modal('hide');
-                        resolve();
-                    });
-                });
-            });
-        });
+        return data;
+    }
 
+    function errorBox() {
+        return $('#assignment-error');
+    }
+
+    function hideError() {
+        errorBox().addClass('d-none').text('');
     }
 
     /**
-     * Sends an AJAX request to the remove action with the selected users and workspace ID as parameters.
-     * When the response is received, it reloads the assigned and users sections using pjax, and hides the role modal.
-     *
-     * @param {Array} selectedValues An array of selected values.
-     * @param {string} id_workspace The workspace ID.
-     * @param {string} modalSelector The modal selector.
+     * Reddedilen isteğin mesajı (ör. üye olmayana rol verme: 403 + {message}); yoksa sayfanın genel metni.
      */
-    function removeAction(selectedValues, id_workspace, modalSelector) {
-        // Send AJAX request to remove action with selected users and workspace ID
-        $.get('remove', {
-            selected_values: selectedValues,
-            id_workspace: id_workspace
-        }, function (data) {
-            // Reload assigned and users sections using pjax
-            $.pjax.reload({
-                container: '#assigned'
-            }).done(function () {
-                $.pjax.reload({
-                    container: '#users'
-                }).done(function () {
-                    // Hide role modal
-                    updateUserList.call(document.getElementById('available-roles'));
+    function errorMessage(xhr) {
+        var body = xhr ? xhr.responseJSON : null;
+        if (body && typeof body.message === 'string' && body.message !== '') {
+            return body.message;
+        }
+        return errorBox().attr('data-default-message') || '';
+    }
+
+    function showError(xhr) {
+        errorBox().text(errorMessage(xhr)).removeClass('d-none');
+    }
+
+    /**
+     * Seçim yokken istek gönderilmez; kutuda ne yapılacağı söylenir (data-no-member-message / data-no-selection-message).
+     */
+    function showHint(attribute) {
+        errorBox().text(errorBox().attr(attribute) || '').removeClass('d-none');
+    }
+
+    function isEmpty(values) {
+        return !values || values.length === 0;
+    }
+
+    function reloadFlash() {
+        try {
+            $.pjax.reload({ container: '#pjax-flash-message' });
+        } catch (error) {
+        }
+    }
+
+    function reloadLists(modalSelector) {
+        return new Promise(function (resolve) {
+            $.pjax.reload({ container: '#assigned' }).done(function () {
+                $.pjax.reload({ container: '#users' }).done(function () {
                     $(modalSelector).modal('hide');
+                    resolve();
                 });
             });
+        });
+    }
+
+    function post(url, data) {
+        return new Promise(function (resolve, reject) {
+            $.ajax({ url: url, type: 'POST', dataType: 'json', data: csrfData(data) })
+                .done(function (response) {
+                    resolve(response);
+                })
+                .fail(function (xhr) {
+                    reject(xhr);
+                });
+        });
+    }
+
+    function assignAction(selectedValues, role, idWorkspace, modalSelector, idModule, type) {
+        if (role === '' || role === null || role === undefined) {
+            return Promise.resolve();
+        }
+        return post('assign?id=' + encodeURIComponent(idWorkspace), {
+            selected_values: selectedValues,
+            role: role,
+            id_module: idModule,
+            type: type
+        }).then(function () {
+            return reloadLists(modalSelector);
+        });
+    }
+
+    function removeAction(selectedValues, idWorkspace, modalSelector) {
+        return post('remove?id_workspace=' + encodeURIComponent(idWorkspace), {
+            selected_values: selectedValues
+        }).then(function () {
+            return reloadLists(modalSelector);
         });
     }
 
     function updateUserList() {
-        const role = this.value;
         $.ajax({
             url: 'get-users',
             type: 'POST',
-            data: {
-                role: role,
-                id_workspace: id_workspace,
-                '_csrf-web': yii.getCsrfToken()
-            },
-            success: function (data) {
-                $('#users-panel').show();
-                $('#spinner-div-page').hide();
-            }
+            data: csrfData({
+                role: this ? this.value : '',
+                id_workspace: window.id_workspace
+            })
+        }).done(function () {
+            $('#users-panel').show();
+            $('#spinner-div-page').hide();
         });
     }
 
-});
+    function moduleRoles() {
+        var roles = {};
+        $('.module-list').each(function (index, element) {
+            roles[element.getAttribute('data-key')] = element.value;
+        });
+        return roles;
+    }
+
+    function init() {
+        $('#role-select').on('click', async function () {
+            var selectedValues = ($('#users-select-list').val() || []).slice();
+            var roles = moduleRoles();
+            var icon = $('.fa-arrow-right');
+            hideError();
+            if (isEmpty(selectedValues)) {
+                showHint('data-no-member-message');
+                return;
+            }
+            icon.removeClass('fa fa-arrow-right');
+            icon.addClass('spinner-border spinner-border-sm');
+            try {
+                for (var key in roles) {
+                    await assignAction(selectedValues, roles[key], window.id_workspace, '#roleModal', key, 'create');
+                }
+            } catch (xhr) {
+                showError(xhr);
+            }
+            icon.removeClass('spinner-border spinner-border-sm');
+            icon.addClass('fa fa-arrow-right');
+            reloadFlash();
+        });
+
+        $('#role-select-update').on('click', function () {
+            var selectedUsers = $('#assigned-users').val();
+            var selectedRole = $('#role-list-update').val();
+            var idModule = $('#module-list-update').val();
+            hideError();
+            assignAction(selectedUsers, selectedRole, window.id_workspace, '#roleModalUpdate', idModule, 'update')
+                .catch(function (xhr) {
+                    $('#roleModalUpdate').modal('hide');
+                    showError(xhr);
+                })
+                .then(reloadFlash);
+        });
+
+        $('#removeButton').on('click', function () {
+            var selectedValues = $('select[data-target="assigned"]').val();
+            hideError();
+            if (isEmpty(selectedValues)) {
+                showHint('data-no-selection-message');
+                return;
+            }
+            $('#users-panel').hide();
+            $('#spinner-div-page').show();
+            removeAction(selectedValues, window.id_workspace, '#roleModal')
+                .then(function () {
+                    updateUserList.call(document.getElementById('available-roles'));
+                }, function (xhr) {
+                    $('#users-panel').show();
+                    $('#spinner-div-page').hide();
+                    showError(xhr);
+                })
+                .then(reloadFlash);
+        });
+    }
+
+    $(init);
+})();

@@ -130,4 +130,26 @@ class WorkspaceUser extends \yii\db\ActiveRecord
     {
         return parent::find();
     }
+
+    /**
+     * Of the given user ids, returns those who are not already members of the workspace.
+     *
+     * @param int $idWorkspace
+     * @param int[] $userIds
+     * @return int[]
+     */
+    public static function nonMemberIds(int $idWorkspace, array $userIds): array
+    {
+        if ($userIds === []) {
+            return [];
+        }
+
+        $memberIds = self::findNoGroupBy()
+            ->select('id_user')
+            ->distinct()
+            ->andWhere(['id_workspace' => $idWorkspace, 'id_user' => $userIds])
+            ->column();
+
+        return array_values(array_diff(array_map('intval', $userIds), array_map('intval', $memberIds)));
+    }
 }
