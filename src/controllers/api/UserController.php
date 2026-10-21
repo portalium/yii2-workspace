@@ -15,6 +15,8 @@ class UserController extends RestActiveController
     public function actions()
     {
         $actions = parent::actions();
+        // checkAccess() is empty here: the inherited write actions let anyone edit any workspace's members.
+        unset($actions['create'], $actions['update'], $actions['delete']);
         $actions['index'] = [
             'class' => 'yii\rest\IndexAction',
             'modelClass' => $this->modelClass,

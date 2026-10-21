@@ -1,7 +1,6 @@
 <?php
 
 use kartik\select2\Select2;
-use kartik\date\DatePicker;
 use portalium\user\models\User;
 use portalium\workspace\Module;
 
@@ -37,9 +36,11 @@ echo $form->field($model, 'emails')->widget(Select2::className(), [
     ],
 ]);
 
+// yiisoft/yii2-jui is not installed here; the browser's own date input sends the same yyyy-mm-dd value.
 echo $form->field($model, 'date_expire')->input('date', [
+    'class' => 'form-control',
     'min' => date('Y-m-d'),
-    'max' => date('Y-m-d', strtotime('+10 years')),
+    'value' => $model->date_expire ? substr((string) $model->date_expire, 0, 10) : '',
 ]);
 
 ?>

@@ -23,31 +23,30 @@ $(document).ready(function () {
         iTag.removeClass('fa fa-arrow-right');
         iTag.addClass('spinner-border spinner-border-sm');
 
+        // Stop at the first refusal (e.g. the plan's member limit) so the other modules are not assigned half-way.
+        let succeeded = true;
         for (let key in moduleRoles) {
             let role = moduleRoles[key];
             let id_module = key;
-            await assignAction(selectedValues, role, id_workspace, '#roleModal', id_module, 'create');
+            if (!await assignAction(selectedValues, role, id_workspace, '#roleModal', id_module, 'create')) {
+                succeeded = false;
+                break;
+            }
         }
         iTag.removeClass('spinner-border spinner-border-sm');
         iTag.addClass('fa fa-arrow-right');
-        try {
-            $.pjax.reload({ container: '#pjax-flash-message' });
-        } catch (error) {
-
+        if (succeeded) {
+            reloadFlashMessages();
         }
     });
 
     // Handles the click event for the role-select-update button
-    $('#role-select-update').on('click', function () {
-        var selectedValues = $('select[data-target="assigned"]').val();
+    $('#role-select-update').on('click', async function () {
         var selectedRole = $('#role-list-update').val();
         var id_module = $('#module-list-update').val();
         var selectedUsers = $('#assigned-users').val();
-        assignAction(selectedUsers, selectedRole, id_workspace, '#roleModalUpdate', id_module, 'update');
-        try {
-            $.pjax.reload({ container: '#pjax-flash-message' });
-        } catch (error) {
-
+        if (await assignAction(selectedUsers, selectedRole, id_workspace, '#roleModalUpdate', id_module, 'update')) {
+            reloadFlashMessages();
         }
     });
 
@@ -57,13 +56,38 @@ $(document).ready(function () {
         $('#spinner-div-page').show();
 
         var selectedValues = $('select[data-target="assigned"]').val();
-        removeAction(selectedValues, id_workspace, '#roleModal');
+        removeAction(selectedValues, id_workspace, '#roleModal').then(function (succeeded) {
+            if (succeeded) {
+                reloadFlashMessages();
+            }
+        });
+    });
+
+    function reloadFlashMessages() {
         try {
             $.pjax.reload({ container: '#pjax-flash-message' });
         } catch (error) {
 
         }
-    });
+    }
+
+    /**
+     * Shows the server's refusal (plan limit, missing permission, ...) above the page. The error page is parsed
+     * with DOMParser so its scripts never run, and the message is inserted as text.
+     */
+    function showRequestError(xhr) {
+        var message = xhr.responseJSON && xhr.responseJSON.message;
+        if (!message && xhr.responseText) {
+            var errorBox = new DOMParser().parseFromString(xhr.responseText, 'text/html').querySelector('.site-error .alert-danger');
+            message = errorBox ? errorBox.textContent.trim() : '';
+        }
+        if (!message) {
+            message = xhr.status + ' ' + xhr.statusText;
+        }
+        var alert = $('<div class="alert alert-danger alert-dismissible fade show" role="alert"></div>').text(message);
+        alert.append('<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>');
+        $('#pjax-flash-message').prepend(alert);
+    }
 
     /**
      * Sends an AJAX request to the assign action with the selected users, role, and workspace ID as parameters.
@@ -73,13 +97,14 @@ $(document).ready(function () {
      * @param {string} selectedRole The selected role.
      * @param {string} id_workspace The workspace ID.
      * @param {string} modalSelector The modal selector.
+     * @return {Promise<boolean>} false when the server refused the request
      */
     async function assignAction(selectedValues, selectedRole, id_workspace, modalSelector, id_module, type) {
         if (selectedRole === '' || selectedRole === null) {
-            return;
+            return true;
         }
         // Send AJAX request to assign action with selected users, role, and workspace ID
-        return await new Promise((resolve, reject) => {
+        return await new Promise((resolve) => {
             $.get('assign', {
                 selected_values: selectedValues,
                 role: selectedRole,
@@ -95,9 +120,13 @@ $(document).ready(function () {
                         container: '#users'
                     }).done(function () {
                         $(modalSelector).modal('hide');
-                        resolve();
+                        resolve(true);
                     });
                 });
+            }).fail(function (xhr) {
+                $(modalSelector).modal('hide');
+                showRequestError(xhr);
+                resolve(false);
             });
         });
 
@@ -110,24 +139,32 @@ $(document).ready(function () {
      * @param {Array} selectedValues An array of selected values.
      * @param {string} id_workspace The workspace ID.
      * @param {string} modalSelector The modal selector.
+     * @return {Promise<boolean>} false when the server refused the request
      */
     function removeAction(selectedValues, id_workspace, modalSelector) {
-        // Send AJAX request to remove action with selected users and workspace ID
-        $.get('remove', {
-            selected_values: selectedValues,
-            id_workspace: id_workspace
-        }, function (data) {
-            // Reload assigned and users sections using pjax
-            $.pjax.reload({
-                container: '#assigned'
-            }).done(function () {
+        return new Promise((resolve) => {
+            // Send AJAX request to remove action with selected users and workspace ID
+            $.get('remove', {
+                selected_values: selectedValues,
+                id_workspace: id_workspace
+            }, function (data) {
+                // Reload assigned and users sections using pjax
                 $.pjax.reload({
-                    container: '#users'
+                    container: '#assigned'
                 }).done(function () {
-                    // Hide role modal
-                    updateUserList.call(document.getElementById('available-roles'));
-                    $(modalSelector).modal('hide');
+                    $.pjax.reload({
+                        container: '#users'
+                    }).done(function () {
+                        // Hide role modal
+                        updateUserList.call(document.getElementById('available-roles'));
+                        $(modalSelector).modal('hide');
+                        resolve(true);
+                    });
                 });
+            }).fail(function (xhr) {
+                updateUserList.call(document.getElementById('available-roles'));
+                showRequestError(xhr);
+                resolve(false);
             });
         });
     }

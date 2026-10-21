@@ -29,6 +29,7 @@ class AssignmentController extends WebController
                     'class' => VerbFilter::className(),
                     'actions' => [
                         'delete' => ['POST'],
+                        'leave' => ['POST'],
                     ],
                 ],
             ]
@@ -100,6 +101,7 @@ class AssignmentController extends WebController
             'model' => $workspace,
             'users' => ArrayHelper::map($availableUsers, 'id_user', 'username'),
             'assignedUsers' => ArrayHelper::map($assignedUsers, 'id_workspace_user', 'username'),
+            'assignedUserIds' => ArrayHelper::map($assignedUsers, 'id_workspace_user', 'id_user'),
             'moduleArray' => $moduleArray,
             'dynamicModuleModel' => $dynamicModuleModel,
             'availableRoles' => $availableRoles,
@@ -180,7 +182,7 @@ class AssignmentController extends WebController
         $workspaceUsers = Yii::$app->request->get('selected_values');
         $id_module = Yii::$app->request->get('id_module');
 
-        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace_user' => $workspaceUsers])->all();
+        $workspaceUsers = WorkspaceUser::findNoGroupBy()->where(['id_workspace_user' => $workspaceUsers, 'id_workspace' => $id_workspace])->all();
 
         foreach ($workspaceUsers as $workspaceUser) {
             $workspaceUser->role = $role;
@@ -218,7 +220,7 @@ class AssignmentController extends WebController
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
         $workspaceUsersIds = Yii::$app->request->get('selected_values');
-        $workspaceUsers = WorkspaceUser::find()->where(['id_workspace_user' => $workspaceUsersIds])->groupBy(['id_workspace_user'])->all();
+        $workspaceUsers = WorkspaceUser::findNoGroupBy()->where(['id_workspace_user' => $workspaceUsersIds, 'id_workspace' => $id_workspace])->all();
         $uniqueModule = [];
         $workspaceAdminRoles = [];
         foreach ($workspaceUsers as $workspaceUser) {
@@ -242,12 +244,16 @@ class AssignmentController extends WebController
             $count = count(array_filter($checkWorkspacesDataProvider, function ($workspaceUserCount) use ($workspaceUser) {
                 return $workspaceUserCount->role == $workspaceUser->role && $workspaceUserCount->id_module == $workspaceUser->id_module;
             }));
-            if (isset($workspaceAdminRoles[$workspaceUser->id_module]) && $workspaceUser->role == $workspaceAdminRoles[$workspaceUser->id_module] && $count < 2 && $workspaceUser->workspace->id_user == $workspaceUser->id_user) {
-                Yii::$app->session->addFlash('error', sprintf(Module::t('You can not remove user %s from workspace %s because he is an administrator.'), $workspaceUser->user->username, $workspaceUser->workspace->name));
+            // The owner keeps every role in their own workspace; this also covers the old last-admin rule.
+            if ((int) $workspaceUser->workspace->id_user === (int) $workspaceUser->id_user) {
+                $ownerMessage = Module::t('The workspace owner {user} cannot be removed from {workspace}.', ['user' => $workspaceUser->user->username, 'workspace' => $workspaceUser->workspace->name]);
             } else {
                 $deletebleWorkspaceUsers[] = $workspaceUser->id_workspace_user;
                 unset($checkWorkspacesDataProvider[array_search($workspaceUser, $workspaceUsers)]);
             }
+        }
+        if (isset($ownerMessage)) {
+            Yii::$app->session->addFlash('error', $ownerMessage);
         }
         WorkspaceUser::deleteAll(['id_workspace_user' => $deletebleWorkspaceUsers]);
         Yii::$app->session->addFlash('success', 'Users removed from role successfully.');
@@ -269,7 +275,7 @@ class AssignmentController extends WebController
             throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
-        $workspaceUsers = WorkspaceUser::find(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->groupBy('id_workspace_user')->all();
+        $workspaceUsers = WorkspaceUser::findNoGroupBy()->where(['id_user' => Yii::$app->user->id, 'status' => WorkspaceUser::STATUS_ACTIVE])->all();
         if ($workspaceUsers) {
             foreach ($workspaceUsers as $workspaceUser) {
                 if ($workspaceUser->status == WorkspaceUser::STATUS_INACTIVE)
@@ -292,6 +298,27 @@ class AssignmentController extends WebController
             return $this->redirect(['/']);
     }
 
+    /**
+     * The signed-in user leaves a workspace they belong to but do not own.
+     */
+    public function actionLeave($id)
+    {
+        if (!\Yii::$app->user->can('workspaceWebAssignmentLeave')) {
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
+        }
+        $workspace = $this->findModel($id);
+        try {
+            if (WorkspaceUser::leave($workspace->id_workspace, Yii::$app->user->id) > 0) {
+                Yii::$app->session->addFlash('success', Module::t('You left the workspace {name}.', ['name' => $workspace->name]));
+            } else {
+                Yii::$app->session->addFlash('error', Module::t('You are not a member of this workspace.'));
+            }
+        } catch (\yii\base\UserException $e) {
+            Yii::$app->session->addFlash('error', $e->getMessage());
+        }
+        return $this->redirect(['/workspace/default/index']);
+    }
+
     //get-users
     public function actionGetUsers()
     {
@@ -301,6 +328,9 @@ class AssignmentController extends WebController
         $role = $authManager->getRole($role);
         if (!$id_workspace || !$role) {
             return json_encode([]);
+        }
+        if (!\Yii::$app->user->can('workspaceWebDefaultAssignment', ['id_module' => 'workspace', 'model' => $this->findModel($id_workspace)])) {
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
         $workspaceUsers = WorkspaceUser::find()->where(['id_workspace' => $id_workspace])->groupBy('id_user')->all();
@@ -317,6 +347,9 @@ class AssignmentController extends WebController
     public function actionGetRoles()
     {
         $id_user = Yii::$app->request->post('id_user');
+        if (!$this->canSeeRolesOf($id_user)) {
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
+        }
         $authManager = Yii::$app->authManager;
         $roles = $authManager->getRolesByUser($id_user);
         $roles = ArrayHelper::map($roles, 'name', 'name');
@@ -341,6 +374,21 @@ class AssignmentController extends WebController
             }
             return json_encode(['output' => $out, 'selected' => '']);
         }
+    }
+
+    /**
+     * Anyone sees their own roles, full access sees everyone's, an owner sees those of their workspaces' members.
+     */
+    private function canSeeRolesOf($id_user)
+    {
+        if ((int) $id_user === (int) Yii::$app->user->id || Yii::$app->user->can('workspaceWorkspaceFullAccess')) {
+            return true;
+        }
+        $ownedWorkspaceIds = Workspace::find()->select('id_workspace')->where(['id_user' => Yii::$app->user->id])->column();
+        if (empty($ownedWorkspaceIds)) {
+            return false;
+        }
+        return WorkspaceUser::findNoGroupBy()->where(['id_user' => $id_user, 'id_workspace' => $ownedWorkspaceIds])->exists();
     }
 
     /**
