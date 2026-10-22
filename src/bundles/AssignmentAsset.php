@@ -8,6 +8,10 @@ class AssignmentAsset extends AssetBundle
 {
     public $sourcePath = '@vendor/portalium/yii2-workspace/src/assets/';
 
+    public $css = [
+        'css/assignment.css',
+    ];
+
     public $js = [
         'assignment.js'
     ];

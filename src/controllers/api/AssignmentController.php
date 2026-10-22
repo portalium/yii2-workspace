@@ -42,6 +42,8 @@ class AssignmentController extends RestActiveController
      *
      * Returns assignment data for a workspace: available users, currently
      * assigned users, supported modules and available roles.
+     * "users" (eklenebilecek kullanıcılar) yalnızca sistem geneli atama izninde dolu;
+     * sahip ve üyeler için boş nesnedir, yeni üye davetle gelir.
      *
      * @param int $id Id Workspace
      * @return array
@@ -59,7 +61,6 @@ class AssignmentController extends RestActiveController
             throw new BadRequestHttpException(Module::t('Please set default role for workspace module.'));
         }
 
-        $users = User::find()->select(['id_user', 'username'])->asArray()->all();
         $assignedUsers = WorkspaceUser::find()
             ->select([UserModule::$tablePrefix . 'user.id_user', Module::$tablePrefix . 'workspace_user.id_workspace_user', 'username', Module::$tablePrefix . 'workspace_user.role', Module::$tablePrefix . 'workspace_user.id_module'])
             ->leftJoin(UserModule::$tablePrefix . 'user', UserModule::$tablePrefix . 'user.id_user = ' . Module::$tablePrefix . 'workspace_user.id_user')
@@ -68,10 +69,14 @@ class AssignmentController extends RestActiveController
             ->asArray()
             ->all();
 
-        $assignedUserIds = array_column($assignedUsers, 'id_user');
-        $availableUsers = array_filter($users, function ($user) use ($assignedUserIds) {
-            return !in_array($user['id_user'], $assignedUserIds);
-        });
+        $availableUsers = [];
+        if ($this->canAddAnyUser()) {
+            $availableUsers = User::find()
+                ->select(['username', 'id_user'])
+                ->where(['not in', 'id_user', array_values(array_filter(array_column($assignedUsers, 'id_user')))])
+                ->indexBy('id_user')
+                ->column();
+        }
 
         $assignedUsers = array_map(function ($user) {
             $user['username'] = $user['username'] . ' (' . $user['role'] . (isset($user['id_module']) ? ' / ' . $user['id_module'] : '') . ')';
@@ -87,7 +92,7 @@ class AssignmentController extends RestActiveController
 
         return [
             'model' => $workspace,
-            'users' => ArrayHelper::map($availableUsers, 'id_user', 'username'),
+            'users' => (object) $availableUsers,
             'assignedUsers' => ArrayHelper::map($assignedUsers, 'id_workspace_user', 'username'),
             'moduleArray' => $moduleArray,
             'availableRoles' => $availableRoles,
@@ -149,6 +154,12 @@ class AssignmentController extends RestActiveController
             return $this->actionAssignUpdate();
         }
 
+        if (!$this->canAddAnyUser() && WorkspaceUser::nonMemberIds($model->id, $model->selected_values) !== []) {
+            throw new ForbiddenHttpException(
+                Module::t('Only members of this workspace can be given a role here. To add someone new, send an invitation.')
+            );
+        }
+
         foreach ($model->selected_values as $user) {
             $workspaceUser = WorkspaceUser::find()->where([
                 'id_workspace' => $model->id,
@@ -189,7 +200,7 @@ class AssignmentController extends RestActiveController
      */
     public function actionAssignUpdate()
     {
-        $id_workspace = Yii::$app->request->put('id_workspace');
+        $id_workspace = Yii::$app->request->getBodyParam('id_workspace');
         $workspace = $this->findModel($id_workspace);
 
         if (!(Yii::$app->user->can('workspaceApiAssignmentAssignUpdate', ['id_module' => 'workspace', 'model' => $workspace]) ||
@@ -197,9 +208,9 @@ class AssignmentController extends RestActiveController
             throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
-        $role = Yii::$app->request->put('role');
-        $ids = Yii::$app->request->put('id_workspace_user');
-        $id_module = Yii::$app->request->put('id_module');
+        $role = Yii::$app->request->getBodyParam('role');
+        $ids = Yii::$app->request->getBodyParam('id_workspace_user');
+        $id_module = Yii::$app->request->getBodyParam('id_module');
 
         if (!$role || !$id_module || !is_array($ids) || empty($ids)) {
             throw new BadRequestHttpException(
@@ -372,9 +383,11 @@ class AssignmentController extends RestActiveController
         $id_workspace = Yii::$app->request->get('id_workspace');
 
         $workspace = $this->findModel($id_workspace);
-        if (!(Yii::$app->user->can('workspaceApiAssignmentView', ['id_module' => 'workspace', 'model' => $workspace]) ||
-            (Yii::$app->user->can('workspaceApiAssignmentViewOwn', ['id_module' => 'workspace', 'model' => $workspace]) &&
-                ($workspace->id_user == Yii::$app->user->id || $id_user == Yii::$app->user->id)))) {
+        $isSelf = (int) $id_user === (int) Yii::$app->user->id;
+        $canView = Yii::$app->user->can('workspaceApiAssignmentView')
+            || (Yii::$app->user->can('workspaceApiAssignmentViewOwn') && $workspace->id_user == Yii::$app->user->id)
+            || (Yii::$app->workspace->can('workspace', 'workspaceApiAssignmentView') && Yii::$app->workspace->id == $id_workspace);
+        if (!$isSelf && !$canView) {
             throw new ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
         }
 
@@ -416,6 +429,15 @@ class AssignmentController extends RestActiveController
         $availableRoles = $availableRoles[$moduleName] ?? [];
 
         return $availableRoles;
+    }
+
+    /**
+     * Sistem geneli atama izni (admin rolü). Sahip ve üyeler yalnızca mevcut üyelere rol verir;
+     * yeni üye davetle gelir.
+     */
+    private function canAddAnyUser(): bool
+    {
+        return Yii::$app->user->can('workspaceApiAssignmentAssign');
     }
 
     /**

@@ -104,11 +104,12 @@ class DefaultController extends WebController
      */
     public function actionCreate()
     {
-        if (!\Yii::$app->user->can('workspaceWebDefaultCreate', ['id_module' => 'workspace'])) {
-            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
-        }
         $model = new Workspace();
         $model->id_user = Yii::$app->user->id;
+        // Yeni kaydın sahibi oturumdaki kullanıcıdır; ForWorkspace kuralı sahipliğe baktığı için model verilir.
+        if (!\Yii::$app->user->can('workspaceWebDefaultCreate', ['id_module' => 'workspace', 'model' => $model])) {
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
+        }
         if (!Yii::$app->workspace->checkSupportRoles()) {
             Yii::$app->session->addFlash('error', Module::t('Please set default role for workspace module.'));
 
@@ -135,11 +136,12 @@ class DefaultController extends WebController
      */
     public function actionCreateVirtual()
     {
-        if (!\Yii::$app->user->can('workspaceWebDefaultCreate', ['id_module' => 'workspace'])) {
-            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
-        }
         $model = new Workspace();
         $model->id_user = Yii::$app->user->id;
+        // Yeni kaydın sahibi oturumdaki kullanıcıdır; ForWorkspace kuralı sahipliğe baktığı için model verilir.
+        if (!\Yii::$app->user->can('workspaceWebDefaultCreate', ['id_module' => 'workspace', 'model' => $model])) {
+            throw new \yii\web\ForbiddenHttpException(Module::t('You are not allowed to access this page.'));
+        }
         $model->is_virtual = Workspace::IS_VIRTUAL_TRUE;
         if (!Yii::$app->workspace->checkSupportRoles()) {
             Yii::$app->session->addFlash('error', Module::t('Please set default role for workspace module.'));
@@ -180,8 +182,14 @@ class DefaultController extends WebController
         }
         $model = $this->findModel($id);
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id_workspace]);
+        $ownerId = $model->id_user;
+        if ($this->request->isPost && $model->load($this->request->post())) {
+            if (!Yii::$app->user->can('workspaceWorkspaceFullAccess')) {
+                $model->id_user = $ownerId;
+            }
+            if ($model->save()) {
+                return $this->redirect(['view', 'id' => $model->id_workspace]);
+            }
         }
 
         return $this->render('update', [

@@ -7,29 +7,20 @@ use yii\bootstrap5\Modal;
 use kartik\depdrop\DepDrop;
 use kartik\select2\Select2;
 use portalium\workspace\Module;
+use portalium\theme\widgets\Alert;
 use portalium\theme\widgets\Panel;
-use portalium\user\models\User;
 use portalium\workspace\bundles\AssignmentAsset;
 
 /** @var portalium\workspace\models\Workspace $model */
+/** @var array $users id_user => username; sistem geneli atama izni yoksa yalnızca mevcut üyeler */
+/** @var bool $canAddAnyUser */
 
-$this->title = $model->name;
-$this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['index']];
+$this->title = Module::t('Members and roles');
+$this->params['breadcrumbs'][] = ['label' => Module::t('Workspaces'), 'url' => ['/workspace/default/index']];
+$this->params['breadcrumbs'][] = ['label' => $model->displayTitle(), 'url' => ['/workspace/default/view', 'id' => $model->id_workspace]];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
-$this->registerCss(
-    <<<CSS
-    .select2 .selection {
-        width: 100%;
-    }
-
-    legend {
-        float: none;
-        width: auto;
-        font-size: inherit;
-    }
-    CSS
-);
+AssignmentAsset::register($this);
 ?>
 
 <div class="workspace-assignment">
@@ -39,17 +30,36 @@ $this->registerCss(
         ]) ?>
     </p>
 
+    <?= Alert::widget([
+        'body' => '',
+        'closeButton' => false,
+        'options' => [
+            'id' => 'assignment-error',
+            'class' => 'alert-danger d-none',
+            'role' => 'alert',
+            'aria-live' => 'assertive',
+            'data-default-message' => Module::t('The change could not be saved. Refresh the page and try again.'),
+            'data-no-member-message' => Module::t('Select a member first.'),
+            'data-no-selection-message' => Module::t('First select the roles to remove in the list on the right.'),
+        ],
+    ]) ?>
+
     <div class="row">
         <div class="col-md-5">
 
             <?php Panel::begin(['title' => Html::encode(Module::t('Users')), 'options' => ['id' => 'users-panel']]) ?>
+            <?php if (!$canAddAnyUser) : ?>
+                <p class="text-muted small">
+                    <?= Module::t('Only members of this workspace are listed. To add someone new, {link}.', [
+                        'link' => Html::a(Module::t('send an invitation'), ['/workspace/invitation/index', 'id' => $model->id_workspace, 'open' => 1]),
+                    ]) ?>
+                </p>
+            <?php endif; ?>
             <?php
             echo Select2::widget([
                 'name' => 'users-select-list',
                 'id' => 'users-select-list',
-                'data' => array_map(function ($item) {
-                    return Module::t($item);
-                }, User::find()->select('username')->indexBy('id_user')->column()),
+                'data' => $users,
                 'maintainOrder' => true,
                 'toggleAllSettings' => [
                     'selectLabel' => '<i class="fa fa-check-circle"></i> Tag All',
@@ -57,9 +67,13 @@ $this->registerCss(
                     'selectOptions' => ['class' => 'text-success'],
                     'unselectOptions' => ['class' => 'text-danger'],
                 ],
-                'options' => ['placeholder' => Module::t('Select and add a user ...'), 'multiple' => true, 'style' => 'width:100%'],
+                'options' => [
+                    'placeholder' => $canAddAnyUser ? Module::t('Select and add a user ...') : Module::t('Select a member ...'),
+                    'multiple' => true,
+                    'style' => 'width:100%',
+                ],
                 'pluginOptions' => [
-                    'tags' => true,
+                    'tags' => $canAddAnyUser,
                 ],
             ]);
             ?>
@@ -96,8 +110,8 @@ $this->registerCss(
         <div class="col-md-2">
             <div class="text-center" style="position: relative; top: 50%;">
                 <div class="btn-group-vertical" style="transform: translateY(-50%);">
-                    <?= Html::button(Html::tag('i', '', ['class' => 'fa fa-arrow-left']), ['class' => 'btn btn-danger', 'id' => 'removeButton']) ?>
-                    <?= Html::button(Html::tag('i', '', ['class' => 'fa fa-arrow-right']), ['class' => 'btn btn-success', 'id' => 'role-select',]) ?>
+                    <?= Html::button(Html::tag('i', '', ['class' => 'fa fa-arrow-left', 'aria-hidden' => 'true']) . ' ' . Html::encode(Module::t('Remove selected roles')), ['class' => 'btn btn-danger', 'id' => 'removeButton']) ?>
+                    <?= Html::button(Html::encode(Module::t('Give role')) . ' ' . Html::tag('i', '', ['class' => 'fa fa-arrow-right', 'aria-hidden' => 'true']), ['class' => 'btn btn-success', 'id' => 'role-select',]) ?>
                 </div>
             </div>
         </div>
@@ -105,7 +119,7 @@ $this->registerCss(
             <?php Modal::begin([
                 'id' => 'roleModalUpdate',
                 'title' => Module::t('Roles'),
-                'footer' => Html::button(Module::t('Cancel'), ['class' => 'btn btn-assignment', 'data-bs-dismiss' => 'modal']) . Html::button(Module::t('Select'), ['class' => 'btn btn-primary', 'id' => 'role-select-update']),
+                'footer' => Html::button(Module::t('Cancel'), ['class' => 'btn btn-warning', 'data-bs-dismiss' => 'modal']) . Html::button(Module::t('Select'), ['class' => 'btn btn-primary', 'id' => 'role-select-update']),
             ]) ?>
             <div class="mb-3 row">
                 <label class="col-sm-2 col-form-label" for="role-list-update"><?= Module::t('Roles')?></label>
@@ -156,7 +170,6 @@ $this->registerCss(
 $this->registerJs(<<<JS
     var id_workspace = $model->id_workspace;
     JS, \yii\web\View::POS_HEAD);
-AssignmentAsset::register($this);
 ?>
 
 <?php

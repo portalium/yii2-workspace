@@ -2,6 +2,8 @@
 
 namespace portalium\workspace\components;
 
+use portalium\user\components\UserDataHandler;
+use portalium\user\components\UserDeleteException;
 use portalium\base\Event;
 use portalium\site\models\Setting;
 use portalium\user\models\User;
@@ -10,6 +12,7 @@ use portalium\workspace\models\WorkspaceUser;
 use portalium\workspace\Module;
 use Yii;
 use yii\base\BaseObject;
+use yii\db\Query;
 
 class TriggerActions extends BaseObject
 {
@@ -119,12 +122,103 @@ class TriggerActions extends BaseObject
 
     public function onUserDeleteBefore($event)
     {
-        ['id' => $id_user] = $event->payload;
+        [$idUser, $action, $defaultUser] = UserDataHandler::payload($event);
 
-        $workspaces = Workspace::find()->where(['id_user' => $id_user])->all();
-        foreach ($workspaces as $workspace) {
-            $workspace->delete();
+        if ($action === UserDataHandler::ACTION_TRANSFER) {
+            $workspaceIds = Workspace::find()->select('id_workspace')->where(['id_user' => $idUser])->column();
+            UserDataHandler::transfer(Workspace::class, $idUser, $defaultUser);
+            $this->copyMemberships($idUser, $defaultUser, $workspaceIds);
+            return;
         }
-        Workspace::deleteAll(['id_user' => null]);
+
+        foreach (Workspace::find()->where(['id_user' => $idUser])->all() as $workspace) {
+            $this->assertOnlyOwnerData($workspace, $idUser);
+        }
+        UserDataHandler::delete(Workspace::class, $idUser);
+    }
+
+    /**
+     * Silinecek alanda başka üye ya da başka kullanıcıya ait (aktarılmış dahil) kayıt varsa reddeder;
+     * alan silinince bu kayıtlar da CASCADE ve modül dinleyicileriyle giderdi.
+     */
+    private function assertOnlyOwnerData(Workspace $workspace, int $idUser): void
+    {
+        $label = $workspace->title ?: $workspace->name;
+
+        $otherMember = WorkspaceUser::find()
+            ->where(['id_workspace' => $workspace->id_workspace])
+            ->andWhere(['<>', 'id_user', $idUser])
+            ->exists();
+        if ($otherMember) {
+            throw new UserDeleteException(Module::t('Workspace {workspace} has other members; it cannot be deleted with this user.', [
+                'workspace' => $label,
+            ]));
+        }
+
+        foreach (self::workspaceTables() as $table) {
+            $foreign = (new Query())->from($table)
+                ->where(['id_workspace' => $workspace->id_workspace])
+                ->andWhere(['<>', 'id_user', $idUser])
+                ->exists();
+            if ($foreign) {
+                throw new UserDeleteException(Module::t('Workspace {workspace} contains records of other users in {table}; it cannot be deleted with this user.', [
+                    'workspace' => $label,
+                    'table' => $table,
+                ]));
+            }
+        }
+    }
+
+    /**
+     * Hem id_workspace hem id_user kolonu olan tablolar (workspace modülünün kendi tabloları hariç).
+     *
+     * @return string[]
+     */
+    private static function workspaceTables(): array
+    {
+        static $tables = null;
+        if ($tables === null) {
+            $tables = (new Query())
+                ->select('c1.TABLE_NAME')
+                ->from(['c1' => 'information_schema.COLUMNS'])
+                ->innerJoin(['c2' => 'information_schema.COLUMNS'], 'c2.TABLE_SCHEMA = c1.TABLE_SCHEMA AND c2.TABLE_NAME = c1.TABLE_NAME')
+                ->where('c1.TABLE_SCHEMA = DATABASE()')
+                ->andWhere(['c1.COLUMN_NAME' => 'id_workspace', 'c2.COLUMN_NAME' => 'id_user'])
+                ->andWhere(['not like', 'c1.TABLE_NAME', Module::$tablePrefix . '%', false])
+                ->column();
+        }
+
+        return $tables;
+    }
+
+    /**
+     * Aktarılan çalışma alanlarında hedef kullanıcıya, silinen kullanıcının rollerini verir;
+     * yoksa hedef alanın sahibi olur ama üyesi olmadığı için alana giremez.
+     */
+    private function copyMemberships(int $idUser, ?int $defaultUser, array $workspaceIds): void
+    {
+        if ($defaultUser === null || $workspaceIds === []) {
+            return;
+        }
+
+        $rows = WorkspaceUser::find()->where(['id_user' => $idUser, 'id_workspace' => $workspaceIds])->all();
+        foreach ($rows as $row) {
+            $exists = WorkspaceUser::find()->where([
+                'id_user' => $defaultUser,
+                'id_workspace' => $row->id_workspace,
+                'id_module' => $row->id_module,
+                'role' => $row->role,
+            ])->exists();
+            if ($exists) {
+                continue;
+            }
+            Yii::$app->db->createCommand()->insert(WorkspaceUser::tableName(), [
+                'id_user' => $defaultUser,
+                'id_workspace' => $row->id_workspace,
+                'id_module' => $row->id_module,
+                'role' => $row->role,
+                'status' => WorkspaceUser::STATUS_INACTIVE,
+            ])->execute();
+        }
     }
 }

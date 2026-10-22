@@ -4,6 +4,7 @@ namespace portalium\workspace\widgets;
 
 use Yii;
 use yii\base\Widget;
+use yii\web\YiiAsset;
 use yii\helpers\Html;
 use portalium\workspace\Module;
 use portalium\theme\widgets\Nav;
@@ -51,6 +52,7 @@ class Workspace extends Widget
             $orgItems[] = [
                 'label' => Module::t($value->workspace->title) . (isset($value->workspace->name) ? (' (' . $value->workspace->name . ')') : ''),
                 'url' => ['/workspace/assignment/set-workspace', 'id' => $value->id_workspace_user],
+                'linkOptions' => ['data-method' => 'post'],
                 'active' => $activeWorkspace && $activeWorkspace->id_workspace == $value->id_workspace ? true : false,
             ];
         }
@@ -59,10 +61,8 @@ class Workspace extends Widget
         if ($activeWorkspace) {
             $menuItems[] = [
                 'label' => $this->generateLabel("Workspace"),
-                'url' => ['/workspace/assignment/set-workspace', 'id' => $activeWorkspace->id_workspace],
+                'url' => '#',
                 'items' => $orgItems,
-               
-                
             ];
             $this->registerCss();
         } else {
@@ -72,6 +72,7 @@ class Workspace extends Widget
                 'items' => $orgItems,
             ];
         }
+        YiiAsset::register($this->getView());
         return Nav::widget([
             'options' => $this->options,
             'items' => $menuItems,

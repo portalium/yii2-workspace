@@ -21,7 +21,7 @@ class WorkspaceCheckRule extends Rule
 
         $permission = $item->name;
         $id_user = Yii::$app->user->id;
-        $module = $params['id_module'];
+        $module = $params['id_module'] ?? null;
         if ($module == 'storage')
             $hasPermission = $this->checkAccess($activeWorkspaceId, $permission, $id_user, $module);
         else if($module == 'workspace')

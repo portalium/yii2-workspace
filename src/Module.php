@@ -50,6 +50,12 @@ class Module extends \portalium\base\Module
                 'POST set_workspace' => 'set-workspace',
                 'POST setWorkspace' => 'set-workspace',
 
+                'GET active' => 'active',
+
+                'GET joined-workspaces' => 'get-joined-workspaces',
+                'GET joined_workspaces' => 'get-joined-workspaces',
+                'GET joinedWorkspaces' => 'get-joined-workspaces',
+
                 'GET manage' => 'manage',
             ],
         ],
