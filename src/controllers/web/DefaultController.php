@@ -46,9 +46,8 @@ class DefaultController extends WebController
 
         $searchModel = new WorkspaceSearch();
         $query = Yii::$app->workspace->getJoinedWorkspaces(null, true);
-        $dataProvider = new \yii\data\ActiveDataProvider([
+        $dataProvider = new \portalium\data\ActiveDataProvider([
             'query' => $query,
-            'pagination' => ['pageSize' => 20],
         ]);
 
         return $this->render('index', [
