@@ -22,13 +22,14 @@ class WorkspaceCheckRule extends Rule
         $permission = $item->name;
         $id_user = Yii::$app->user->id;
         $module = $params['id_module'] ?? null;
+        $hasPermission = false;
         if ($module == 'storage')
             $hasPermission = $this->checkAccess($activeWorkspaceId, $permission, $id_user, $module);
         else if($module == 'workspace')
         {
             $hasPermission = $this->checkAccessWorkspace($activeWorkspaceId, $permission, $id_user, $module, $params);
         }
-        return $hasPermission; // kullanıcının organizasyonda belirtilen izne sahip olup olmadığına göre true veya false döndür
+        return $hasPermission; // true/false depending on whether the user has the given permission in the workspace
     }
 
     protected function checkAccess($activeWorkspaceId, $permission, $id_user, $module)
