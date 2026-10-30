@@ -5,12 +5,15 @@ namespace portalium\workspace\models;
 use yii\base\Model;
 use portalium\data\ActiveDataProvider;
 use portalium\workspace\models\Workspace;
+use portalium\user\models\User;
 
 /**
  * WorkspaceSearch represents the model behind the search form of `portalium\workspace\models\Workspace`.
  */
 class WorkspaceSearch extends Workspace
 {
+    public $username;
+
     /**
      * {@inheritdoc}
      */
@@ -18,7 +21,7 @@ class WorkspaceSearch extends Workspace
     {
         return [
             [['id_workspace', 'is_virtual'], 'integer'],
-            [['name', 'date_create', 'date_update'], 'safe'],
+            [['name', 'username', 'date_create', 'date_update'], 'safe'],
         ];
     }
 
@@ -56,6 +59,10 @@ class WorkspaceSearch extends Workspace
         ]);
 
         $query->andFilterWhere(['like', 'name', $this->name]);
+
+        if ($this->username !== null && $this->username !== '') {
+            $query->andWhere(['id_user' => User::find()->select('id_user')->andWhere(['like', 'username', $this->username])]);
+        }
 
         return $dataProvider;
     }
