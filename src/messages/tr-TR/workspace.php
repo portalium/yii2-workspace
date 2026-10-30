@@ -208,4 +208,9 @@ return [
     => 'Katılmak için giriş yapın. Henüz hesabınız yoksa davetin gönderildiği adresle ({email}) kaydolun; hesabınız hemen etkin olur.',
     'To join, sign in. If you do not have an account yet, sign up with the address the invitation was sent to ({email}) using the link in the invitation email; then your account will be active right away.'
     => 'Katılmak için giriş yapın. Henüz hesabınız yoksa davetin gönderildiği adresle ({email}) e-postadaki bağlantıdan kaydolursanız hesabınız hemen etkin olur.',
+    'Workspace settings' => 'Çalışma alanı ayarları',
+    'Invite members' => 'Üye davet et',
+    'New workspace' => 'Yeni çalışma alanı',
+    '{n, plural, =1{# member} other{# members}}' => '{n, plural, other{# üye}}',
+    'Select a workspace' => 'Çalışma alanı seçin',
 ];

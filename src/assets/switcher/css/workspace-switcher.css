@@ -1,0 +1,267 @@
+/* Workspace card at the top of the side menu */
+
+.ws-switcher {
+  --ws-border: #e2e6e0;
+  --ws-border-hover: #c9d1c7;
+  --ws-text: #1d2520;
+  --ws-muted: #5c6860;
+  --ws-hover: #f1f4f0;
+  position: relative;
+}
+
+.ws-switcher-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid var(--ws-border);
+  border-radius: 10px;
+  color: var(--ws-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s ease;
+}
+
+.ws-switcher-card:hover,
+.ws-switcher-card[aria-expanded="true"] {
+  border-color: var(--ws-border-hover);
+}
+
+.ws-switcher-card:focus-visible {
+  outline: 2px solid #1f8a3c;
+  outline-offset: 2px;
+}
+
+.ws-switcher-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ws-switcher-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ws-switcher-meta {
+  font-size: 12px;
+  color: var(--ws-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ws-switcher-chevrons {
+  flex: 0 0 16px;
+  color: var(--ws-muted);
+}
+
+/* initials tile, one colour per workspace */
+.ws-tile {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.ws-switcher-menu .ws-tile {
+  flex-basis: 26px;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+.ws-tile-0 { background: #1f7a37; }
+.ws-tile-1 { background: #2f6fb3; }
+.ws-tile-2 { background: #8a5a1f; }
+.ws-tile-3 { background: #7b4fa8; }
+.ws-tile-4 { background: #b04545; }
+.ws-tile-5 { background: #2d7480; }
+
+.ws-tile-new {
+  background: transparent;
+  border: 1px dashed #b7c0b5;
+  color: #5c6860;
+}
+
+.ws-switcher-menu .ws-tile-new {
+  background: transparent;
+  border: 1px dashed #b7c0b5;
+  color: var(--ws-muted);
+}
+
+/* the menu */
+.ws-switcher-menu {
+  width: 280px;
+  max-width: calc(100vw - 24px);
+  padding: 6px;
+  border: 1px solid var(--ws-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(20, 40, 25, 0.14);
+  font-size: 13px;
+}
+
+.ws-switcher-heading {
+  padding: 8px 10px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ws-muted);
+}
+
+.ws-switcher-list {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.ws-switcher-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  color: var(--ws-text);
+  white-space: nowrap;
+}
+
+.ws-switcher-menu .dropdown-item:hover,
+.ws-switcher-menu .dropdown-item:focus,
+.ws-switcher-menu .dropdown-item.active,
+.ws-switcher-menu .dropdown-item:active {
+  background: var(--ws-hover);
+  color: var(--ws-text);
+}
+
+.ws-switcher-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ws-switcher-badge {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border: 1px solid var(--ws-border);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ws-muted);
+}
+
+.ws-switcher-check {
+  flex: 0 0 16px;
+}
+
+.ws-switcher-new {
+  color: var(--ws-muted) !important;
+}
+
+.ws-switcher-link i {
+  width: 26px;
+  text-align: center;
+  color: var(--ws-muted);
+}
+
+.ws-switcher-menu .dropdown-divider {
+  margin: 4px 0;
+  border-color: var(--ws-border);
+}
+
+.ws-switcher-footer {
+  padding: 8px 10px 10px;
+}
+
+/* collapsed side menu (desktop): only the tile */
+@media (min-width: 769px) {
+  #sidebar.active .ws-switcher-card {
+    justify-content: center;
+    width: auto;
+    margin: 0 auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  #sidebar.active .ws-switcher-text,
+  #sidebar.active .ws-switcher-chevrons {
+    display: none;
+  }
+}
+
+/* Top menu: a small pill that only switches workspace */
+#navbar .workspace-pill .workspace-pill-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px 0 6px;
+  background: #f3f5f2;
+  border: 1px solid #e2e6e0;
+  border-radius: 16px;
+  color: #2b332d;
+  font-size: 12px;
+}
+
+#navbar .workspace-pill .workspace-pill-link:hover,
+#navbar .workspace-pill .workspace-pill-link.show {
+  border-color: #c9d1c7;
+}
+
+#navbar .workspace-pill .ws-tile {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  font-size: 9px;
+}
+
+.workspace-pill-name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the side menu card already shows the workspace while the side menu is open */
+@media (min-width: 769px) {
+  body:has(#sidebar:not(.active) .ws-switcher) .workspace-pill {
+    display: none !important;
+  }
+}
+
+/* a figure at the bottom of the menu (e.g. credits left) */
+.ws-switcher-stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ws-switcher-stat-label {
+  color: var(--ws-muted);
+}
+
+.ws-switcher-stat-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #14632b;
+}

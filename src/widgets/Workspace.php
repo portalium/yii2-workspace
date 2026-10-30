@@ -11,6 +11,7 @@ use portalium\theme\widgets\Nav;
 use portalium\menu\models\MenuItem;
 use portalium\workspace\models\WorkspaceUser;
 use portalium\workspace\models\Workspace as WorkspaceModel;
+use portalium\workspace\bundles\WorkspaceSwitcherAsset;
 
 class Workspace extends Widget
 {
@@ -25,7 +26,7 @@ class Workspace extends Widget
             //$this->icon = Html::tag('i', '', ['class' => 'fa-building', 'style' => 'margin-right: 5px;']);
         }
      
-        $this->options['class'] = 'placementWidget';
+        $this->options['class'] = 'placementWidget workspace-pill';
         if($this->placement == 'top-to-bottom'){
             $this->options['data-bs-placement'] = $this->placement; 
             $this->registerCss();
@@ -59,25 +60,50 @@ class Workspace extends Widget
 
         //orgItems unique
         if ($activeWorkspace) {
+            $label = $this->pillLabel($activeWorkspace);
             $menuItems[] = [
-                'label' => $this->generateLabel("Workspace"),
+                'label' => $label ?? $this->generateLabel("Workspace"),
+                'encode' => false,
                 'url' => '#',
                 'items' => $orgItems,
+                // the pill look only when the name is shown; an icon-only item looks like its neighbours
+                'linkOptions' => $label !== null ? ['class' => 'workspace-pill-link'] : [],
             ];
             $this->registerCss();
         } else {
             $menuItems[] = [
                 'label' => $this->generateLabel("Workspace"),
+                'encode' => false,
                 'url' => ['#'],
                 'items' => $orgItems,
             ];
         }
         YiiAsset::register($this->getView());
+        WorkspaceSwitcherAsset::register($this->getView());
         return Nav::widget([
             'options' => $this->options,
             'items' => $menuItems,
         
         ]);
+    }
+
+    /**
+     * Label of the top menu pill: the active workspace's initials tile and name; null when the item
+     * is set to show only its icon.
+     */
+    private function pillLabel(WorkspaceUser $activeWorkspace): ?string
+    {
+        $workspace = $activeWorkspace->workspace;
+        if ($workspace === null || (isset($this->display) && $this->display == MenuItem::TYPE_DISPLAY['icon'])) {
+            return null;
+        }
+        $title = $workspace->displayTitle();
+
+        return Html::tag('span', Html::encode(WorkspaceSwitcher::initials($title)), [
+                'class' => 'ws-tile ws-tile-' . WorkspaceSwitcher::color((int) $workspace->id_workspace),
+                'aria-hidden' => 'true',
+            ])
+            . Html::tag('span', Html::encode($title), ['class' => 'workspace-pill-name']);
     }
 
     private function generateLabel($text)
@@ -89,17 +115,17 @@ class Workspace extends Widget
                     $label = $this->icon;
                     break;
                 case MenuItem::TYPE_DISPLAY['icon-text']:
-                    $label = $this->icon . Module::t($text);
+                    $label = $this->icon . Html::encode(Module::t($text));
                     break;
                 case MenuItem::TYPE_DISPLAY['text']:
-                    $label = Module::t($text);
+                    $label = Html::encode(Module::t($text));
                     break;
                 default:
-                    $label = $this->icon . Module::t($text);
+                    $label = $this->icon . Html::encode(Module::t($text));
                     break;
             }
         } else {
-            $label = $this->icon . Module::t($text);
+            $label = $this->icon . Html::encode(Module::t($text));
         }
 
         return $label;
